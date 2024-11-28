@@ -74,6 +74,7 @@ const Words = ({ word, translate }) => {
           className={`${styles.inputWord} ${styles.firstInputLength}`}
           ref={inputWordHtml}
           onChange={handleChangeWord}
+          spellcheck="false"
         />
         <div className={`${styles.word}`}>
           {renderWord({ string: word, value: inputWord })}
@@ -84,6 +85,7 @@ const Words = ({ word, translate }) => {
           className={`${styles.inputWord} ${styles.secondInputLength}`}
           onChange={handleChangeTranslate}
           ref={inputTranslateHtml}
+          spellcheck="false"
         />
         <div className={`${styles.word}`}>
           {renderWord({ string: translate, value: inputTranslate })}
