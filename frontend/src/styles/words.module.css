@@ -1,0 +1,33 @@
+.container {
+  font-size: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.word {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  pointer-events: none;
+  font-size: 1.5rem;
+}
+.firstColor {
+  color: #dcdee3;
+}
+.secondColor {
+  color: #5a65ea;
+}
+.inputWord {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  font-size: 1.5rem;
+  color: rgba(0, 0, 0, 0);
+  /* pointer-events: none; */
+}
+.inputWord:focus {
+  caret-color: #dcdee3;
+}
+.wrapper {
+  position: relative;
+}
