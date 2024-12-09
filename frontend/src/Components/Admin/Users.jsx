@@ -100,6 +100,7 @@ function Users() {
           value={newUser.username}
           onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
           className={styles.admin_input}
+          spellcheck="false"
         />
         <input
           type="text"
@@ -108,6 +109,7 @@ function Users() {
           value={newUser.email}
           onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
           className={styles.admin_input}
+          spellcheck="false"
         />
         <input
           type="text"
@@ -118,6 +120,7 @@ function Users() {
             setNewUser({ ...newUser, password_hash: e.target.value })
           }
           className={styles.admin_input}
+          spellcheck="false"
         />
         <input
           type="text"
@@ -128,6 +131,7 @@ function Users() {
             setNewUser({ ...newUser, english_level: e.target.value })
           }
           className={styles.admin_input}
+          spellcheck="false"
         />
         <button type="submit" className={styles.admin_button}>
           Add User
@@ -148,7 +152,7 @@ function Users() {
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => (
+          {users.sort((a, b) => a.id_user - b.id_user).map((user) => (
             <tr key={user.id_user}>
               <td>
                 <div>{user.id_user}</div>
@@ -160,6 +164,7 @@ function Users() {
                   onChange={(e) =>
                     handleChange(user.id_user, "username", e.target.value)
                   }
+                  spellcheck="false"
                 />
               </td>
               <td>
@@ -169,6 +174,7 @@ function Users() {
                   onChange={(e) =>
                     handleChange(user.id_user, "email", e.target.value)
                   }
+                  spellcheck="false"
                 />
               </td>
               <td>
@@ -178,6 +184,7 @@ function Users() {
                   onChange={(e) =>
                     handleChange(user.id_user, "english_level", e.target.value)
                   }
+                  spellcheck="false"
                 />
               </td>
               <td>
@@ -191,6 +198,7 @@ function Users() {
                       e.target.value
                     )
                   }
+                  spellcheck="false"
                 />
               </td>
               <td>
@@ -213,16 +221,10 @@ function Users() {
                       e.target.value
                     )
                   }
+                  spellcheck="false"
                 />
               </td>
               <td className={styles.border_none}>
-                {/* <button
-                className={styles.admin_actionButton}
-                value={user.id_user}
-                onClick={(e) => handleDelete(e)}
-              >
-                Удалить
-              </button> */}
                 <div className={styles.iconContainer} onClick={() => handleDelete(user.id_user)}>
                   <span className={`material-icons ${styles.icon}`}>close</span>
                 </div>
