@@ -3,8 +3,14 @@
 import os
 import sys
 
+from django.conf import settings
+from backend import settings
+
 
 def main():
+    print('123')
+    print(os.path.abspath(settings.DATABASES['default']['NAME']))
+
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
     try:

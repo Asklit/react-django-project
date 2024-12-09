@@ -3,29 +3,16 @@ from .models import Users
 from rest_framework import generics
 from .serializers import UserSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from .models import Users, Admins, Words, LearnedWords, WordsInProgress
+from .serializers import UserSerializer, AdminSerializer, WordsSerializer, LearnedWordsSerializer, WordsInProgressSerializer
+from django.db import connection
+from rest_framework.decorators import api_view
 
-# Create your views here.
 
-# api/views.py
-
-class CreateUserView(generics.CreateAPIView):
+class CreateUserView(generics.ListCreateAPIView):
     queryset = Users.objects.all()
-    print(queryset[0].username, queryset[0].password_hash)
+    print(queryset)
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class GetUserList(generics.ListCreateAPIView):
-    serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        return Users.objects.exclude(email=user)

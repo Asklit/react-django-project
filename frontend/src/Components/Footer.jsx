@@ -3,7 +3,7 @@ import styles from "../styles/footer.module.css";
 
 const Footer = () => {
   return (
-    <div className={styles.madeby}>Made by asklit 2024</div>
+    <div className={styles.madeby}>Made by asklit, 2024</div>
   );
 };
 

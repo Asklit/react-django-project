@@ -10,10 +10,10 @@ const Nav = () => {
         <nav>
           <ul className={styles.menu}>
             <li className={styles.item}>
-              <Link to="#" className={styles.link}>Log in</Link>
+              <Link to="#" className={styles.link}>Войти</Link>
             </li>
             <li>
-              <Link href="#" className={styles.link}>Register</Link>
+              <Link href="#" className={styles.link}>Зарегистрироваться</Link>
             </li>
           </ul>
         </nav>

@@ -1,6 +1,6 @@
 # from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Users
+from .models import LearnedWords, Users, Words, WordsInProgress, Admins
 from django.contrib.auth.hashers import make_password
 
 # api/serializers.py
@@ -15,9 +15,9 @@ class UserSerializer(serializers.ModelSerializer):
             'english_level'
         ]
         extra_kwargs = {
-            'password_hash': {'write_only': True},  # Ensure password_hash is write-only
-            'email': {'validators': []},  # Remove default validators if needed
-            'username': {'validators': []}  # Remove default validators if needed
+            'password_hash': {'write_only': True},
+            'email': {'validators': []}, 
+            'username': {'validators': []}
         }
 
     def validate_email(self, value):
@@ -41,3 +41,27 @@ class UserSerializer(serializers.ModelSerializer):
         user.password_hash = make_password(validated_data['password_hash'])
         user.save()
         return user
+
+
+class AdminSerializer(serializers.ModelSerializer):
+    id_admin = UserSerializer()
+
+    class Meta:
+        model = Admins
+        fields = '__all__'
+
+
+class WordsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Words
+        fields = '__all__'
+
+class WordsInProgressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WordsInProgress
+        fields = '__all__'
+
+class LearnedWordsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LearnedWords
+        fields = '__all__'

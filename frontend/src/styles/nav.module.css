@@ -36,6 +36,7 @@ nav {
     padding: 15px 30px;
     display: inline-block;
     transition: background-color 0.3s;
+    border-radius: 4px;
 }
 .menu li .link:hover {
     background-color: #5a65ea;
