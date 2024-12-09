@@ -34,6 +34,7 @@
 
 .admin_tab.active, .tab:hover {
   background-color: #4f545c;
+  border: 1px solid #2c2f33;
   color: #dcdee3;
 }
 
@@ -61,11 +62,11 @@
 }
 
 .admin_button {
-  border: 1px solid #4f545c;
   color: #dcdee3;
   text-decoration: none;
   display: inline-block;
   background-color: #4f545c;
+  border: 1px solid #2c2f33;
   transition: background-color 0.3s;
   border-radius: 4px;
   font-size: 1rem;
