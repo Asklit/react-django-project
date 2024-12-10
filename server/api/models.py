@@ -3,10 +3,13 @@ from django.db import models
 
 class Users(models.Model):
     id_user = models.AutoField(primary_key=True)
-    username = models.CharField(max_length=20, unique=True)
-    email = models.CharField(max_length=20, unique=True)
+    username = models.CharField(max_length=20, unique=True, error_messages={
+        'max_length': 'Неверный формат имени пользователя.'})
+    email = models.CharField(max_length=20, unique=True, error_messages={
+        'max_length': 'Неверный формат электронной почты.'})
     password_hash = models.CharField()
-    english_level = models.CharField(max_length=2)
+    english_level = models.CharField(max_length=2, error_messages={
+        'max_length': 'Убедитесь, что это поле не содержит более 2 символов.'})
     is_email_verificated = models.BooleanField(default=False)
     account_created_at = models.DateTimeField(auto_now_add=True)
     password_changed_at = models.DateTimeField(auto_now=True)

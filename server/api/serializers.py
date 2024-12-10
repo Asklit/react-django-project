@@ -23,13 +23,32 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def validate_email(self, value):
+        if not value:
+            raise serializers.ValidationError("Это поле не может быть пустым")
         if Users.objects.filter(email=value).exists():
-            raise serializers.ValidationError("This email is already registered.")
+            raise serializers.ValidationError("Этот email уже используется.")
         return value
 
     def validate_username(self, value):
+        if not value:
+            raise serializers.ValidationError("Это поле не может быть пустым")
         if Users.objects.filter(username=value).exists():
-            raise serializers.ValidationError("This username is already taken.")
+            raise serializers.ValidationError("Этот username уже существует.")
+        return value
+    
+    def validate_password(self, value):
+        if not value:
+            raise serializers.ValidationError("Это поле не может быть пустым")
+        return value
+    
+    def validate_english_level(self, value):
+        if not value:
+            raise serializers.ValidationError("Это поле не может быть пустым")
+        if len(value) != 2:
+            raise serializers.ValidationError("Формат уровня должен быть XX.")
+
+        if value not in ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'a1', 'a2', 'b1', 'b2', 'c1', 'c2']:
+            raise serializers.ValidationError("Неправильный уровень анйглийского.")
         return value
     
 class UserDetailsSerializer(serializers.ModelSerializer):

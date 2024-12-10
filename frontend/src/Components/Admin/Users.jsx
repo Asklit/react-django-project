@@ -5,6 +5,8 @@ import DateDisplay from "./DateFormat";
 
 function Users() {
   const [users, setUsers] = useState([]);
+  const [formErrors, setFormErrors] = useState({});
+  const [hoveredCell, setHoveredCell] = useState({ row: null, col: null });
 
   const [newUser, setNewUser] = useState({
     username: "",
@@ -12,6 +14,14 @@ function Users() {
     password_hash: "",
     english_level: "",
   });
+
+  const handleMouseEnter = (rowIndex, colIndex) => {
+    setHoveredCell({ row: rowIndex, col: colIndex });
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredCell({ row: null, col: null });
+  };
 
   const fetchUsersData = async () => {
     try {
@@ -28,8 +38,9 @@ function Users() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    let response; // Измените на let, чтобы можно было присвоить значение
     try {
-      await axios.post(
+      response = await axios.post(
         "http://localhost:8000/api/create/users",
         newUser
       );
@@ -39,13 +50,16 @@ function Users() {
         password_hash: "",
         english_level: "",
       });
+      setFormErrors({});
+      fetchUsersData();
     } catch (error) {
+      const errors = error.response.data;
       console.error(
         "There has been a problem with create user operation:",
-        error
+        errors
       );
+      setFormErrors(errors);
     }
-    fetchUsersData();
   };
 
   const handleDelete = async (userId) => {
@@ -93,49 +107,85 @@ function Users() {
   return (
     <>
       <form onSubmit={(e) => handleSubmit(e)} className={styles.admin_form}>
-        <input
-          type="text"
-          name="username"
-          placeholder="Пользователь"
-          value={newUser.username}
-          onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-          className={styles.admin_input}
-          spellcheck="false"
-        />
-        <input
-          type="text"
-          name="email"
-          placeholder="Email"
-          value={newUser.email}
-          onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-          className={styles.admin_input}
-          spellcheck="false"
-        />
-        <input
-          type="text"
-          name="password"
-          placeholder="Пароль"
-          value={newUser.password}
-          onChange={(e) =>
-            setNewUser({ ...newUser, password_hash: e.target.value })
-          }
-          className={styles.admin_input}
-          spellcheck="false"
-        />
-        <input
-          type="text"
-          name="english level"
-          placeholder="Уровень английского"
-          value={newUser.english_level}
-          onChange={(e) =>
-            setNewUser({ ...newUser, english_level: e.target.value })
-          }
-          className={styles.admin_input}
-          spellcheck="false"
-        />
-        <button type="submit" className={styles.admin_button}>
-          Add User
-        </button>
+        <div>
+          <input
+            type="text"
+            name="username"
+            placeholder="Пользователь"
+            value={newUser.username}
+            onChange={(e) =>
+              setNewUser({ ...newUser, username: e.target.value })
+            }
+            className={styles.admin_input}
+            spellCheck="false"
+            autocomplete="off"
+          />
+          {formErrors.username && (
+            <span className={styles.error}>
+              {formErrors.username.join(", ")}
+            </span>
+          )}
+        </div>
+        <div>
+          <input
+            type="text"
+            name="email"
+            placeholder="Email"
+            value={newUser.email}
+            onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+            className={styles.admin_input}
+            spellCheck="false"
+          />
+          {formErrors.email && (
+            <span className={styles.error}>{formErrors.email.join(", ")}</span>
+          )}
+        </div>
+        <div>
+          <input
+            type="text"
+            name="password"
+            placeholder="Пароль"
+            value={newUser.password_hash}
+            onChange={(e) =>
+              setNewUser({ ...newUser, password_hash: e.target.value })
+            }
+            className={styles.admin_input}
+            spellCheck="false"
+          />
+          {formErrors.password_hash && (
+            <span className={styles.error}>
+              {formErrors.password_hash.join(", ")}
+            </span>
+          )}
+        </div>
+        <div>
+          <input
+            type="text"
+            name="english level"
+            placeholder="Уровень английского"
+            value={newUser.english_level}
+            onChange={(e) =>
+              setNewUser({ ...newUser, english_level: e.target.value })
+            }
+            className={styles.admin_input}
+            spellCheck="false"
+          />
+          {formErrors.english_level && (
+            <span className={styles.error}>
+              {formErrors.english_level.join(", ")}
+            </span>
+          )}
+        </div>
+        <div>
+          <button type="submit" className={styles.admin_button}>
+            Добавить пользователя
+          </button>
+          {formErrors.something && (
+            <span className={styles.error}>
+              {formErrors.something.join(", ")}
+            </span>
+          )}
+        </div>
       </form>
       <table className={styles.admin_table}>
         <thead>
@@ -152,85 +202,277 @@ function Users() {
           </tr>
         </thead>
         <tbody>
-          {users.sort((a, b) => a.id_user - b.id_user).map((user) => (
-            <tr key={user.id_user}>
-              <td>
-                <div>{user.id_user}</div>
-              </td>
-              <td>
-                <input
-                  type="text"
-                  value={user.username}
-                  onChange={(e) =>
-                    handleChange(user.id_user, "username", e.target.value)
-                  }
-                  spellcheck="false"
-                />
-              </td>
-              <td>
-                <input
-                  type="email"
-                  value={user.email}
-                  onChange={(e) =>
-                    handleChange(user.id_user, "email", e.target.value)
-                  }
-                  spellcheck="false"
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  value={user.english_level}
-                  onChange={(e) =>
-                    handleChange(user.id_user, "english_level", e.target.value)
-                  }
-                  spellcheck="false"
-                />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  value={String(user.is_email_verificated)}
-                  onChange={(e) =>
-                    handleChange(
-                      user.id_user,
-                      "is_email_verificated",
-                      e.target.value
-                    )
-                  }
-                  spellcheck="false"
-                />
-              </td>
-              <td>
-                <DateDisplay dateString={user.account_created_at} />
-              </td>
-              <td>
-                <DateDisplay dateString={user.password_changed_at} />
-              </td>
-              <td>
-                <DateDisplay dateString={user.last_day_online} />
-              </td>
-              <td>
-                <input
-                  type="text"
-                  value={user.days_in_berserk}
-                  onChange={(e) =>
-                    handleChange(
-                      user.id_user,
-                      "days_in_berserk",
-                      e.target.value
-                    )
-                  }
-                  spellcheck="false"
-                />
-              </td>
-              <td className={styles.border_none}>
-                <div className={styles.iconContainer} onClick={() => handleDelete(user.id_user)}>
-                  <span className={`material-icons ${styles.icon}`}>close</span>
-                </div>
-              </td>
-            </tr>
-          ))}
+          {users
+            .sort((a, b) => a.id_user - b.id_user)
+            .map((user, rowIndex) => (
+              <tr key={user.id_user}>
+                <td
+                  onMouseEnter={() => handleMouseEnter(rowIndex, 0)}
+                  onMouseLeave={handleMouseLeave}
+                  className={`${styles.cell} 
+                                ${
+                                  hoveredCell.row === rowIndex
+                                    ? styles.hoveredRow
+                                    : ""
+                                } 
+                                ${
+                                  hoveredCell.col === 0 ? styles.hoveredCol : ""
+                                } 
+                                ${
+                                  hoveredCell.row === rowIndex &&
+                                  hoveredCell.col === 0
+                                    ? styles.hoveredCell
+                                    : ""
+                                }`}
+                >
+                  <div>{user.id_user}</div>
+                </td>
+                <td
+                  onMouseEnter={() => handleMouseEnter(rowIndex, 1)}
+                  onMouseLeave={handleMouseLeave}
+                  className={`${styles.cell} 
+                                ${
+                                  hoveredCell.row === rowIndex
+                                    ? styles.hoveredRow
+                                    : ""
+                                } 
+                                ${
+                                  hoveredCell.col === 1 ? styles.hoveredCol : ""
+                                } 
+                                ${
+                                  hoveredCell.row === rowIndex &&
+                                  hoveredCell.col === 1
+                                    ? styles.hoveredCell
+                                    : ""
+                                }`}
+                >
+                  <input
+                    type="text"
+                    value={user.username}
+                    onChange={(e) =>
+                      handleChange(user.id_user, "username", e.target.value)
+                    }
+                    spellCheck="false"
+                  />
+                </td>
+                <td
+                  onMouseEnter={() => handleMouseEnter(rowIndex, 2)}
+                  onMouseLeave={handleMouseLeave}
+                  className={`${styles.cell} 
+                                ${
+                                  hoveredCell.row === rowIndex
+                                    ? styles.hoveredRow
+                                    : ""
+                                } 
+                                ${
+                                  hoveredCell.col === 2 ? styles.hoveredCol : ""
+                                } 
+                                ${
+                                  hoveredCell.row === rowIndex &&
+                                  hoveredCell.col === 2
+                                    ? styles.hoveredCell
+                                    : ""
+                                }`}
+                >
+                  <input
+                    type="email"
+                    value={user.email}
+                    onChange={(e) =>
+                      handleChange(user.id_user, "email", e.target.value)
+                    }
+                    spellCheck="false"
+                  />
+                </td>
+                <td
+                  onMouseEnter={() => handleMouseEnter(rowIndex, 3)}
+                  onMouseLeave={handleMouseLeave}
+                  className={`${styles.cell} 
+                                ${
+                                  hoveredCell.row === rowIndex
+                                    ? styles.hoveredRow
+                                    : ""
+                                } 
+                                ${
+                                  hoveredCell.col === 3 ? styles.hoveredCol : ""
+                                } 
+                                ${
+                                  hoveredCell.row === rowIndex &&
+                                  hoveredCell.col === 3
+                                    ? styles.hoveredCell
+                                    : ""
+                                }`}
+                >
+                  <input
+                    type="text"
+                    value={user.english_level}
+                    onChange={(e) =>
+                      handleChange(
+                        user.id_user,
+                        "english_level",
+                        e.target.value
+                      )
+                    }
+                    spellCheck="false"
+                  />
+                </td>
+                <td
+                  onMouseEnter={() => handleMouseEnter(rowIndex, 4)}
+                  onMouseLeave={handleMouseLeave}
+                  className={`${styles.cell} 
+                                ${
+                                  hoveredCell.row === rowIndex
+                                    ? styles.hoveredRow
+                                    : ""
+                                } 
+                                ${
+                                  hoveredCell.col === 4 ? styles.hoveredCol : ""
+                                } 
+                                ${
+                                  hoveredCell.row === rowIndex &&
+                                  hoveredCell.col === 4
+                                    ? styles.hoveredCell
+                                    : ""
+                                }`}
+                >
+                  <div className={styles.checkbox_wrapper}>
+                    <input
+                      type="checkbox"
+                      checked={user.is_email_verificated}
+                      onChange={(e) =>
+                        handleChange(
+                          user.id_user,
+                          "is_email_verificated",
+                          e.target.checked
+                        )
+                      }
+                    />
+                    <svg viewBox="0 0 35.6 35.6">
+                      <circle
+                        className={styles.background}
+                        cx="17.8"
+                        cy="17.8"
+                        r="17.8"
+                      ></circle>
+                      <circle
+                        className={styles.stroke}
+                        cx="17.8"
+                        cy="17.8"
+                        r="14.37"
+                      ></circle>
+                      <polyline
+                        className={styles.check}
+                        points="11.78 18.12 15.55 22.23 25.17 12.87"
+                      ></polyline>
+                    </svg>
+                  </div>
+                </td>
+                <td
+                  onMouseEnter={() => handleMouseEnter(rowIndex, 5)}
+                  onMouseLeave={handleMouseLeave}
+                  className={`${styles.cell} 
+                                ${
+                                  hoveredCell.row === rowIndex
+                                    ? styles.hoveredRow
+                                    : ""
+                                } 
+                                ${
+                                  hoveredCell.col === 5 ? styles.hoveredCol : ""
+                                } 
+                                ${
+                                  hoveredCell.row === rowIndex &&
+                                  hoveredCell.col === 5
+                                    ? styles.hoveredCell
+                                    : ""
+                                }`}
+                >
+                  <DateDisplay dateString={user.account_created_at} />
+                </td>
+                <td
+                  onMouseEnter={() => handleMouseEnter(rowIndex, 6)}
+                  onMouseLeave={handleMouseLeave}
+                  className={`${styles.cell} 
+                                ${
+                                  hoveredCell.row === rowIndex
+                                    ? styles.hoveredRow
+                                    : ""
+                                } 
+                                ${
+                                  hoveredCell.col === 6 ? styles.hoveredCol : ""
+                                } 
+                                ${
+                                  hoveredCell.row === rowIndex &&
+                                  hoveredCell.col === 6
+                                    ? styles.hoveredCell
+                                    : ""
+                                }`}
+                >
+                  <DateDisplay dateString={user.password_changed_at} />
+                </td>
+                <td
+                  onMouseEnter={() => handleMouseEnter(rowIndex, 7)}
+                  onMouseLeave={handleMouseLeave}
+                  className={`${styles.cell} 
+                                ${
+                                  hoveredCell.row === rowIndex
+                                    ? styles.hoveredRow
+                                    : ""
+                                } 
+                                ${
+                                  hoveredCell.col === 7 ? styles.hoveredCol : ""
+                                } 
+                                ${
+                                  hoveredCell.row === rowIndex &&
+                                  hoveredCell.col === 7
+                                    ? styles.hoveredCell
+                                    : ""
+                                }`}
+                >
+                  <DateDisplay dateString={user.last_day_online} />
+                </td>
+                <td
+                  onMouseEnter={() => handleMouseEnter(rowIndex, 8)}
+                  onMouseLeave={handleMouseLeave}
+                  className={`${styles.cell} 
+                                ${
+                                  hoveredCell.row === rowIndex
+                                    ? styles.hoveredRow
+                                    : ""
+                                } 
+                                ${
+                                  hoveredCell.col === 8 ? styles.hoveredCol : ""
+                                } 
+                                ${
+                                  hoveredCell.row === rowIndex &&
+                                  hoveredCell.col === 8
+                                    ? styles.hoveredCell
+                                    : ""
+                                }`}
+                >
+                  <input
+                    type="text"
+                    value={user.days_in_berserk}
+                    onChange={(e) =>
+                      handleChange(
+                        user.id_user,
+                        "days_in_berserk",
+                        e.target.value
+                      )
+                    }
+                    spellCheck="false"
+                  />
+                </td>
+                <td className={styles.border_none}>
+                  <div
+                    className={styles.iconContainer}
+                    onClick={() => handleDelete(user.id_user)}
+                  >
+                    <span className={`material-icons ${styles.icon}`}>
+                      close
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            ))}
         </tbody>
       </table>
     </>

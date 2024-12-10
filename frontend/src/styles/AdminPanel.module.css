@@ -39,7 +39,8 @@
 }
 
 .admin_form {
-  display: inline-block;
+  display: flex;
+  flex-wrap: wrap;
   width: 98%;
   margin-bottom: 20px;
 }
@@ -47,7 +48,7 @@
 .admin_input {
   border: 1px solid #4f545c;
   display: inline-block;
-  width: 22%;
+  width: calc(100% - 16px);
   padding: 15px 30px;
   margin: 8px;
   margin-bottom: 10px;
@@ -55,6 +56,7 @@
   color: #dcdee3;
   border-radius: 4px;
   font-size: 1rem;
+  transition: background-color 0.3s;
 }
 
 .admin_input:focus {
@@ -71,10 +73,27 @@
   border-radius: 4px;
   font-size: 1rem;
   padding: 15px 30px;
+  margin: 8px;
+  margin-bottom: 10px;
+  width: auto;
 }
 .admin_button:hover {
   background-color: #5a65ea;
   color: #dcdee3;
+}
+.error {
+  color: #ff4081;
+  font-size: 0.875rem;
+  margin-top: 5px;
+  display: block;
+  margin: 8px;
+  transition: 0.3s;
+}
+
+@media (max-width: 768px) {
+  .admin_input {
+    width: 100%;
+  }
 }
 
 .admin_table {
@@ -93,7 +112,7 @@
   background-color: #292b30;
   color: #dcdee3;
 }
-.admin_table td div, .admin_table td input {
+.admin_table td div, .admin_table td input[type="text"], .admin_table td input[type="email"] {
   width: 100%;
   height: 64px;
   display: inline-block;
@@ -114,6 +133,29 @@
 
 .admin_table td.border_none {
   border: none;
+}
+
+.cell {
+  border: 1px solid #2c2f33;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.hoveredRow {
+  background-color: rgba(79, 84, 92, 0.5);
+}
+
+.hoveredCol {
+  background-color: rgba(79, 84, 92, 0.5);
+}
+
+.hoveredCell {
+  background-color: #4f545c;
+}
+
+.hoveredRow .cell,
+.hoveredCol .cell,
+.hoveredCell {
+  border-color: #dcdee3;
 }
 
 .admin_actionButton {
@@ -146,4 +188,69 @@
 
 .icon:hover {
   color: #ff4081;
+}
+
+
+.checkbox_wrapper:hover .check {
+  stroke-dashoffset: 0;
+}
+
+.checkbox_wrapper {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+.checkbox_wrapper .background {
+  fill: #ccc;
+  transition: ease all 0.6s;
+  -webkit-transition: ease all 0.6s;
+}
+.checkbox_wrapper .stroke {
+  fill: none;
+  stroke: #fff;
+  stroke-miterlimit: 10;
+  stroke-width: 2px;
+  stroke-dashoffset: 100;
+  stroke-dasharray: 100;
+  transition: ease all 0.6s;
+  -webkit-transition: ease all 0.6s;
+}
+.checkbox_wrapper .check {
+  fill: none;
+  stroke: #fff;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2px;
+  stroke-dashoffset: 22;
+  stroke-dasharray: 22;
+  transition: ease all 0.6s;
+  -webkit-transition: ease all 0.6s;
+}
+.checkbox_wrapper input[type=checkbox] {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.checkbox_wrapper svg {
+  width: 100%;
+  height: 100%;
+}
+.checkbox_wrapper input[type=checkbox]:hover {
+  cursor: pointer;
+}
+.checkbox_wrapper input[type=checkbox]:checked + svg .background {
+  fill: #5a65ea;
+}
+.checkbox_wrapper input[type=checkbox]:checked + svg .stroke {
+  stroke-dashoffset: 0;
+}
+.checkbox_wrapper input[type=checkbox]:checked + svg .check {
+  stroke-dashoffset: 0;
+  stroke: #dcdee3;
 }
