@@ -360,9 +360,35 @@ function Users() {
                         r="14.37"
                       ></circle>
                       <polyline
-                        className={styles.check}
+                        className={`${styles.check} ${
+                          user.is_email_verificated
+                            ? styles.visible
+                            : styles.hidden
+                        }`}
                         points="11.78 18.12 15.55 22.23 25.17 12.87"
                       ></polyline>
+                      <line
+                        className={`${styles.cross} ${
+                          !user.is_email_verificated
+                            ? styles.visible
+                            : styles.hidden
+                        }`}
+                        x1="10"
+                        y1="10"
+                        x2="25"
+                        y2="25"
+                      />
+                      <line
+                        className={`${styles.cross} ${
+                          !user.is_email_verificated
+                            ? styles.visible
+                            : styles.hidden
+                        }`}
+                        x1="25"
+                        y1="10"
+                        x2="10"
+                        y2="25"
+                      />
                     </svg>
                   </div>
                 </td>
