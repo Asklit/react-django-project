@@ -42,3 +42,24 @@ nav {
     background-color: #5a65ea;
     color: #dcdee3;
 }
+
+.menu {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .item {
+    margin-left: 20px;
+  }
+  
+  .link {
+    color: #dcdee3;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  
+  .link:hover {
+    color: #5a65ea;
+  }

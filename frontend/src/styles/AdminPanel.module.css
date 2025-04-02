@@ -32,7 +32,7 @@
   transition: all 0.2s ease-in-out;
 }
 
-.admin_tab.active, .tab:hover {
+.admin_tab.active, .admin_tab:hover {
   background-color: #4f545c;
   border: 1px solid #2c2f33;
   color: #dcdee3;
@@ -43,6 +43,7 @@
   flex-wrap: wrap;
   width: 98%;
   margin-bottom: 20px;
+  justify-content: center;
 }
 
 .admin_input {
@@ -77,10 +78,12 @@
   margin-bottom: 10px;
   width: auto;
 }
+
 .admin_button:hover {
   background-color: #5a65ea;
   color: #dcdee3;
 }
+
 .error {
   color: #ff4081;
   font-size: 0.875rem;
@@ -111,51 +114,112 @@
   padding: 15px 30px;
   background-color: #292b30;
   color: #dcdee3;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
-.admin_table td div, .admin_table td input[type="text"], .admin_table td input[type="email"] {
+
+.admin_table th:hover {
+  background-color: #4f545c;
+}
+
+.admin_table td > div:not(.date-display), 
+.admin_table td input[type="text"], 
+.admin_table td input[type="email"] {
   width: 100%;
   height: 64px;
   display: inline-block;
   padding: 15px 30px;
   color: #dcdee3;
-  transition: border-color 0.3s, background-color 0.3s;
+  background-color: transparent;
+  border: none;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-.admin_table td div:focus, .admin_table td input:focus {
+.admin_table td > div:not(.date-display):focus, 
+.admin_table td input:focus {
   background-color: #4f545c;
   outline: none;
 }
 
-.admin_table td div:empty:before, .admin_table td input:empty:before {
+.admin_table td > div:not(.date-display):empty:before, 
+.admin_table td input:empty:before {
   content: attr(data-placeholder); 
   color: #aaa;
 }
 
+.date-display {
+  padding: 15px 30px;
+  color: #dcdee3;
+  height: auto;
+  width: 100%;
+}
+
 .admin_table td.border_none {
   border: none;
+  width: 64px;
 }
 
 .cell {
   border: 1px solid #2c2f33;
-  transition: background-color 0.3s, border-color 0.3s;
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.2s ease;
 }
 
 .hoveredRow {
-  background-color: rgba(79, 84, 92, 0.5);
+  background-color: rgba(90, 101, 234, 0.1);
 }
 
 .hoveredCol {
-  background-color: rgba(79, 84, 92, 0.5);
+  background-color: rgba(90, 101, 234, 0.1);
 }
 
 .hoveredCell {
-  background-color: #4f545c;
+  background-color: #5a65ea;
+  box-shadow: 0 0 8px rgba(90, 101, 234, 0.5);
+  border-color: #677eb8;
 }
 
-.hoveredRow .cell,
-.hoveredCol .cell,
-.hoveredCell {
-  border-color: #dcdee3;
+.admin_table .hoveredRow .cell,
+.admin_table .hoveredCol .cell {
+  border-color: inherit;
+}
+
+.admin_table .hoveredCell {
+  border-color: #677eb8;
+}
+
+.admin_table td input[type="text"] {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.admin_table .hoveredCell input[type="text"] {
+  color: #ffffff;
+}
+
+.admin_table th:not(:last-child),
+.admin_table td:not(:last-child) {
+  width: 25%;
+}
+
+.admin_table th:last-child,
+.admin_table td:last-child {
+  width: 64px;
+}
+
+.iconContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.icon {
+  font-size: 2rem;
+  color: #dcdee3;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.icon:hover {
+  color: #ff4081;
 }
 
 .admin_actionButton {
@@ -173,23 +237,30 @@
   background-color: #677eb8;
 }
 
-.iconContainer {
+.accordion {
+  margin-top: 20px;
+}
+
+.levelHeader {
+  padding: 15px 30px;
+  background: #2c2f33;
+  cursor: pointer;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
+  border-bottom: 1px solid #4f545c;
+  color: #dcdee3;
+  transition: background-color 0.3s;
 }
 
-.icon {
-  font-size: 2rem;
-  color: inherit; 
-  cursor: pointer; 
-  transition: color 0.3s; 
+.levelHeader:hover {
+  background: #4f545c;
 }
 
-.icon:hover {
-  color: #ff4081;
+.levelHeader h3 {
+  margin: 0;
+  font-size: 1.2rem;
 }
-
 
 .checkbox_wrapper:hover .check {
   stroke-dashoffset: 0;
@@ -201,11 +272,13 @@
   height: 24px;
   cursor: pointer;
 }
+
 .checkbox_wrapper .background {
   fill: #ccc;
   transition: ease all 0.6s;
   -webkit-transition: ease all 0.6s;
 }
+
 .checkbox_wrapper .stroke {
   fill: none;
   stroke: #fff;
@@ -216,6 +289,7 @@
   transition: ease all 0.6s;
   -webkit-transition: ease all 0.6s;
 }
+
 .checkbox_wrapper .check {
   fill: none;
   stroke: #fff;
@@ -227,6 +301,7 @@
   transition: ease all 0.6s;
   -webkit-transition: ease all 0.6s;
 }
+
 .checkbox_wrapper input[type=checkbox] {
   position: absolute;
   width: 100%;
@@ -237,20 +312,68 @@
   opacity: 0;
   cursor: pointer;
 }
+
 .checkbox_wrapper svg {
   width: 100%;
   height: 100%;
 }
+
 .checkbox_wrapper input[type=checkbox]:hover {
   cursor: pointer;
 }
+
 .checkbox_wrapper input[type=checkbox]:checked + svg .background {
   fill: #5a65ea;
 }
+
 .checkbox_wrapper input[type=checkbox]:checked + svg .stroke {
   stroke-dashoffset: 0;
 }
+
 .checkbox_wrapper input[type=checkbox]:checked + svg .check {
   stroke-dashoffset: 0;
   stroke: #dcdee3;
+}
+
+.admin_table th {
+  position: relative;
+  padding: 15px 10px;
+  white-space: nowrap;
+}
+
+.admin_table th::after {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 5px;
+  vertical-align: middle;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+}
+
+.admin_table th.asc::after {
+  border-bottom: 4px solid #dcdee3;
+}
+
+.admin_table th.desc::after {
+  border-top: 4px solid #dcdee3;
+}
+
+.admin_table th, .admin_table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin_table th:nth-child(1),
+.admin_table td:nth-child(1) {
+  width: 50px;
+  min-width: 50px;
+}
+
+.admin_table th:nth-child(2),
+.admin_table td:nth-child(2) {
+  width: 150px;
+  min-width: 150px;
 }

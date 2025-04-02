@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import styles from "../styles/words.module.css";
+import styles from "../styles/MainPageWords.module.css";
 
 const Words = ({ word, translate }) => {
   const [inputWord, setInputWord] = useState("");

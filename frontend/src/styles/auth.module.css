@@ -1,0 +1,155 @@
+.authContainer {
+    background-color: #35373e;
+    color: #dcdee3;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .authCard {
+    background-color: #2c2f33;
+    padding: 30px;
+    border-radius: 4px;
+    border: 1px solid #4f545c;
+    width: 100%;
+    max-width: 400px;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .authCard:hover {
+    border-color: #5a65ea;
+    box-shadow: 0 0 8px rgba(90, 101, 234, 0.3);
+  }
+  
+  .authTitle {
+    color: #dcdee3;
+    font-size: 1.5rem;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .authForm {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .authInput {
+    border: 1px solid #4f545c;
+    padding: 15px 30px;
+    margin-bottom: 10px;
+    background-color: #2c2f33;
+    color: #dcdee3;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .authInput:focus {
+    background-color: #4f545c;
+    border-color: #5a65ea;
+    outline: none;
+  }
+  
+  .authButton {
+    color: #dcdee3;
+    background-color: #4f545c;
+    border: 1px solid #2c2f33;
+    border-radius: 4px;
+    font-size: 1rem;
+    padding: 15px 30px;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .authButton:hover:not(.loading) {
+    background-color: #5a65ea;
+    border-color: #5a65ea;
+  }
+  
+  .authButton.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
+  .loadingContent {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .spinner {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    animation: spin 1s linear infinite;
+  }
+  
+  .spinnerCircle {
+    fill: none;
+    stroke: #dcdee3;
+    stroke-width: 2;
+    stroke-dasharray: 60;
+    stroke-dashoffset: 20;
+    animation: dash 1.5s ease-in-out infinite;
+  }
+  
+  .error {
+    color: #ff4081;
+    font-size: 0.875rem;
+    margin: 10px 0;
+    text-align: center;
+    display: block;
+  }
+  
+  .authLink {
+    color: #dcdee3;
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.875rem;
+  }
+  
+  .link {
+    color: #5a65ea;
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+  
+  .link:hover {
+    color: #677eb8;
+  }
+  
+  @keyframes spin {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
+  @keyframes dash {
+    0% {
+      stroke-dashoffset: 60;
+    }
+    50% {
+      stroke-dashoffset: 20;
+    }
+    100% {
+      stroke-dashoffset: 60;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .authCard {
+      padding: 20px;
+    }
+    
+    .authInput {
+      padding: 12px 20px;
+    }
+    
+    .authButton {
+      padding: 12px 20px;
+    }
+  }
