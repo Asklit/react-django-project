@@ -22,7 +22,7 @@ function Words() {
 
   const fetchWordsForLevel = async (level) => {
     try {
-      const response = await axios.get(`http://localhost:8000/api/list/words?level=${level}`);
+      const response = await axios.get(`http://localhost:8000/api/words/list/?level=${level}`);
       setWordsByLevel(prev => ({
         ...prev,
         [level]: response.data
@@ -71,7 +71,7 @@ function Words() {
 
     // Асинхронный запрос на сервер
     try {
-      const url = `http://localhost:8000/api/update/words/${draggedWord.id_word}/`;
+      const url = `http://localhost:8000/api/words/${draggedWord.id_word}/`;
       await axios.put(url, { word_level: targetLevel });
     } catch (error) {
       console.error("Error moving word:", error);
@@ -114,7 +114,7 @@ function Words() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const response = await axios.post("http://localhost:8000/api/create/words", newWord);
+      const response = await axios.post("http://localhost:8000/api/words/", newWord);
       const createdWord = response.data;
       setWordsByLevel(prev => ({
         ...prev,
@@ -137,7 +137,7 @@ function Words() {
     }));
 
     try {
-      await axios.delete(`http://localhost:8000/api/delete/words/${wordId}/`);
+      await axios.delete(`http://localhost:8000/api/words/${wordId}/`);
     } catch (error) {
       console.error("Error deleting word:", error);
       setWordsByLevel(prev => ({
@@ -156,7 +156,7 @@ function Words() {
     }));
 
     try {
-      const url = `http://localhost:8000/api/update/words/${wordId}/`;
+      const url = `http://localhost:8000/api/words/${wordId}/`;
       await axios.put(url, { [field]: value });
     } catch (error) {
       console.error("Error updating word:", error);
@@ -207,7 +207,6 @@ function Words() {
             <th onClick={() => requestSort(level, 'word')}>Слово</th>
             <th onClick={() => requestSort(level, 'translate_word')}>Перевод</th>
             <th onClick={() => requestSort(level, 'word_level')}>Уровень</th>
-
           </tr>
         </thead>
         <tbody>

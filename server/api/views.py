@@ -1,39 +1,9 @@
-from django.shortcuts import render
-from rest_framework.decorators import api_view
+from rest_framework import generics, status
 from rest_framework.response import Response
-from .models import Users, Words, Admins
+from core.models import Users, Admins
+from vocabulary.models import Words
 from .serializers import UserSerializer, UserDetailsSerializer, WordSerializer, AdminSerializer, AdminCreateSerializer
-from .serializers import UserSerializer, UserDetailsSerializer, WordSerializer, AdminSerializer, AdminCreateSerializer, UserRegisterSerializer, UserLoginSerializer
 from django.contrib.auth.hashers import make_password
-from rest_framework import generics, status, views
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import IsAuthenticated
-
-class RegisterView(views.APIView):
-    def post(self, request):
-        serializer = UserRegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'user_id': user.id_user,
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class LoginView(views.APIView):
-    def post(self, request):
-        serializer = UserLoginSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'user_id': user.id_user,
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UsersCreateView(generics.ListCreateAPIView):
     serializer_class = UserSerializer
@@ -50,7 +20,7 @@ class UsersCreateView(generics.ListCreateAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UsersListView(generics.ListCreateAPIView):
+class UsersListView(generics.ListAPIView):
     serializer_class = UserDetailsSerializer
     queryset = Users.objects.all()
 
@@ -67,10 +37,6 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class UsersListView(generics.ListCreateAPIView):
-    serializer_class = UserDetailsSerializer
-    queryset = Users.objects.all()
 
 class WordsCreateView(generics.ListCreateAPIView):
     serializer_class = WordSerializer

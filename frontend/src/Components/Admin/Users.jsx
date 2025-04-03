@@ -25,7 +25,7 @@ function Users() {
 
   const fetchUsersData = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/api/list/users");
+      const response = await axios.get("http://localhost:8000/api/users/list/");
       setUsers(response.data);
     } catch (error) {
       console.error("Error occurred:", error);
@@ -38,10 +38,10 @@ function Users() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    let response; // Измените на let, чтобы можно было присвоить значение
+    let response;
     try {
       response = await axios.post(
-        "http://localhost:8000/api/create/users",
+        "http://localhost:8000/api/users/",
         newUser
       );
       setNewUser({
@@ -64,7 +64,7 @@ function Users() {
 
   const handleDelete = async (userId) => {
     try {
-      const url = `http://localhost:8000/api/delete/users/${userId}/`;
+      const url = `http://localhost:8000/api/users/${userId}/`;
 
       console.log(`Deleting user at URL: ${url}`);
 
@@ -89,7 +89,7 @@ function Users() {
     );
 
     try {
-      const url = `http://localhost:8000/api/update/users/${userId}/`;
+      const url = `http://localhost:8000/api/users/${userId}/`;
       const updatedData = {
         [field]: value,
       };
@@ -104,6 +104,7 @@ function Users() {
       );
     }
   };
+
   return (
     <>
       <form onSubmit={(e) => handleSubmit(e)} className={styles.admin_form}>
@@ -504,4 +505,5 @@ function Users() {
     </>
   );
 }
+
 export default Users;
