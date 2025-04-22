@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--background);
+  font-family: var(--font-family);
+}
+
+:root {
+  --primary: #5a65ea;
+  --secondary: #677eb8;
+  --background: #35373e;
+  --surface: #2c2f33;
+  --border: #4f545c;
+  --text: #dcdee3;
+  --text-muted: #54555e;
+  --error: #ff4081;
+  --warning: #df4f4b;
+  --level-color: #00c4b4; /* Новый яркий цвет для уровня (бирюзовый) */
+  --spacing-xs: 8px;
+  --spacing-xss: 12px;
+  --spacing-sm: 15px;
+  --spacing-md: 20px;
+  --spacing-lg: 30px;
+  --font-family: 'Roboto', sans-serif;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.2rem;
+  --font-size-xl: 1.5rem;
+  --font-size-xxl: 2rem;
+}

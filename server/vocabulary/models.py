@@ -4,11 +4,16 @@ from core.models import Users
 class Words(models.Model):
     id_word = models.AutoField(primary_key=True)
     word = models.CharField(max_length=30, unique=True)
+    part_of_speech = models.CharField(max_length=50)
     translate_word = models.CharField(max_length=30)
     word_level = models.CharField(max_length=2)
+    rating = models.IntegerField(default=1)
 
-    class Meta: 
+    class Meta:
         db_table = "Words"
+
+    def __str__(self):
+        return f"{self.word} ({self.word_level})"
 
 class LearnedWords(models.Model):
     id_learned_word = models.AutoField(primary_key=True)

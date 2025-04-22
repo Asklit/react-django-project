@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import api from '../../api';
 import { useNavigate } from 'react-router-dom';
-import styles from '../../styles/auth.module.css'; // Создадим отдельный файл стилей
+import styles from '../../styles/auth.module.css';
 
 const Register = () => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
-    english_level: 'A1'
+    english_level: 'A1',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -18,26 +18,25 @@ const Register = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setLoading(true);
     setError(null);
-  
+
     try {
-      const response = await api.post('register/', {
+      const response = await api.post('auth/register/', {
         username: formData.username,
         email: formData.email,
-        password: formData.password, // Изменено с password_hash на password
-        english_level: formData.english_level
+        password: formData.password,
+        english_level: formData.english_level,
       });
-  
+
       localStorage.setItem('accessToken', response.data.access);
       localStorage.setItem('refreshToken', response.data.refresh);
       localStorage.setItem('userId', response.data.user_id);
       
       navigate('/');
     } catch (err) {
-      setError(err.response?.data || 'Registration failed');
+      setError(err.response?.data?.detail || 'Ошибка регистрации');
     } finally {
       setLoading(false);
     }
@@ -46,15 +45,15 @@ const Register = () => {
   return (
     <div className={styles.authContainer}>
       <div className={styles.authCard}>
-        <h2 className={styles.authTitle}>Create Account</h2>
+        <h2 className={styles.authTitle}>Регистрация</h2>
         
-        <form className={styles.authForm} onSubmit={handleSubmit}>
+        <div className={styles.authForm}>
           <input
             name="username"
             type="text"
             required
             className={styles.authInput}
-            placeholder="Username"
+            placeholder="Имя пользователя"
             value={formData.username}
             onChange={handleChange}
             disabled={loading}
@@ -65,7 +64,7 @@ const Register = () => {
             type="email"
             required
             className={styles.authInput}
-            placeholder="Email address"
+            placeholder="Электронная почта"
             value={formData.email}
             onChange={handleChange}
             disabled={loading}
@@ -76,7 +75,7 @@ const Register = () => {
             type="password"
             required
             className={styles.authInput}
-            placeholder="Password"
+            placeholder="Пароль"
             value={formData.password}
             onChange={handleChange}
             disabled={loading}
@@ -89,12 +88,12 @@ const Register = () => {
             onChange={handleChange}
             disabled={loading}
           >
-            <option value="A1">A1 - Beginner</option>
-            <option value="A2">A2 - Elementary</option>
-            <option value="B1">B1 - Intermediate</option>
-            <option value="B2">B2 - Upper Intermediate</option>
-            <option value="C1">C1 - Advanced</option>
-            <option value="C2">C2 - Proficiency</option>
+            <option value="A1">A1 - Начальный</option>
+            <option value="A2">A2 - Элементарный</option>
+            <option value="B1">B1 - Средний</option>
+            <option value="B2">B2 - Выше среднего</option>
+            <option value="C1">C1 - Продвинутый</option>
+            <option value="C2">C2 - Профессиональный</option>
           </select>
 
           {error && (
@@ -104,35 +103,27 @@ const Register = () => {
           )}
 
           <button
-            type="submit"
+            onClick={handleSubmit}
             disabled={loading}
             className={`${styles.authButton} ${loading ? styles.loading : ''}`}
           >
             {loading ? (
               <span className={styles.loadingContent}>
-                <svg
-                  className={styles.spinner}
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className={styles.spinnerCircle}
-                    cx="12"
-                    cy="12"
-                    r="10"
-                  />
+                <svg className={styles.spinner} viewBox="0 0 24 24">
+                  <circle className={styles.spinnerCircle} cx="12" cy="12" r="10" />
                 </svg>
-                Registering...
+                Регистрация...
               </span>
             ) : (
-              'Register'
+              'Зарегистрироваться'
             )}
           </button>
-        </form>
+        </div>
 
         <p className={styles.authLink}>
-          Already have an account?{' '}
+          Уже есть аккаунт?{' '}
           <a href="/login" className={styles.link}>
-            Sign in
+            Войти
           </a>
         </p>
       </div>

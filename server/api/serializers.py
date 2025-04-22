@@ -49,7 +49,7 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 class WordSerializer(serializers.ModelSerializer):
     class Meta:
         model = Words
-        fields = ['id_word', 'word', 'translate_word', 'word_level']
+        fields = ['id_word', 'word', 'part_of_speech', 'translate_word', 'word_level', 'rating']
 
     def validate_word(self, value):
         if not value:

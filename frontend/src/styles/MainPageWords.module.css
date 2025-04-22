@@ -1,33 +1,67 @@
+.card {
+    background-color: var(--surface);
+    padding: var(--spacing-md);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    width: 100%;
+}
+
+.info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+}
+
+.partOfSpeech {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+.level {
+    font-size: var(--font-size-sm);
+    color: var(--level-color);
+    font-weight: 700;
+    background-color: rgba(90, 101, 234, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
 .container {
-  font-size: 1.5rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    font-size: var(--font-size-lg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-md);
 }
+
 .word {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  pointer-events: none;
-  font-size: 1.5rem;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    pointer-events: none;
+    font-size: var(--font-size-lg);
+    font-family: var(--font-family);
 }
-.firstColor {
-  color: #dcdee3;
-}
-.secondColor {
-  color: #5a65ea;
-}
+
 .inputWord {
-  width: 100%;
-  padding: 10px;
-  box-sizing: border-box;
-  font-size: 1.5rem;
-  color: rgba(0, 0, 0, 0);
-  /* pointer-events: none; */
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    font-size: var(--font-size-lg);
+    color: rgba(0, 0, 0, 0);
+    background-color: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: var(--font-family);
 }
+
 .inputWord:focus {
-  caret-color: #dcdee3;
+    caret-color: var(--text);
+    outline: none;
+    border-color: var(--primary);
 }
+
 .wrapper {
-  position: relative;
+    position: relative;
+    flex: 1;
 }

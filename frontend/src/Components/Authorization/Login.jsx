@@ -16,24 +16,23 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setLoading(true);
     setError(null);
-  
+
     try {
-      const response = await api.post('login/', {
+      const response = await api.post('auth/login/', {
         email: formData.email,
-        password: formData.password, // Должно быть password
+        password: formData.password,
       });
-  
+
       localStorage.setItem('accessToken', response.data.access);
       localStorage.setItem('refreshToken', response.data.refresh);
       localStorage.setItem('userId', response.data.user_id);
       
       navigate('/');
     } catch (err) {
-      setError(err.response?.data || 'Login failed');
+      setError(err.response?.data?.detail || 'Ошибка входа');
     } finally {
       setLoading(false);
     }
@@ -42,15 +41,15 @@ const Login = () => {
   return (
     <div className={styles.authContainer}>
       <div className={styles.authCard}>
-        <h2 className={styles.authTitle}>Sign In</h2>
+        <h2 className={styles.authTitle}>Вход</h2>
         
-        <form className={styles.authForm} onSubmit={handleSubmit}>
+        <div className={styles.authForm}>
           <input
             name="email"
             type="email"
             required
             className={styles.authInput}
-            placeholder="Email address"
+            placeholder="Электронная почта"
             value={formData.email}
             onChange={handleChange}
             disabled={loading}
@@ -61,7 +60,7 @@ const Login = () => {
             type="password"
             required
             className={styles.authInput}
-            placeholder="Password"
+            placeholder="Пароль"
             value={formData.password}
             onChange={handleChange}
             disabled={loading}
@@ -74,35 +73,27 @@ const Login = () => {
           )}
 
           <button
-            type="submit"
+            onClick={handleSubmit}
             disabled={loading}
             className={`${styles.authButton} ${loading ? styles.loading : ''}`}
           >
             {loading ? (
               <span className={styles.loadingContent}>
-                <svg
-                  className={styles.spinner}
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className={styles.spinnerCircle}
-                    cx="12"
-                    cy="12"
-                    r="10"
-                  />
+                <svg className={styles.spinner} viewBox="0 0 24 24">
+                  <circle className={styles.spinnerCircle} cx="12" cy="12" r="10" />
                 </svg>
-                Signing in...
+                Вход...
               </span>
             ) : (
-              'Sign In'
+              'Войти'
             )}
           </button>
-        </form>
+        </div>
 
         <p className={styles.authLink}>
-          Don't have an account?{' '}
+          Нет аккаунта?{' '}
           <a href="/register" className={styles.link}>
-            Register
+            Зарегистрироваться
           </a>
         </p>
       </div>

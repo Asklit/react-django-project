@@ -1,35 +1,51 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import styles from "../styles/nav.module.css";
 import api from '../api';
+import styles from "../styles/nav.module.css";
 
 const Nav = () => {
   const navigate = useNavigate();
-  // Проверяем наличие токена в localStorage для определения статуса авторизации
   const isAuthenticated = !!localStorage.getItem("accessToken");
+  const [username, setUsername] = useState("Пользователь");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Функция для перехода на главную страницу
+  // Fetch username when authenticated
+  useEffect(() => {
+    const fetchUsername = async () => {
+      const userId = localStorage.getItem("userId");
+      if (userId) {
+        try {
+          const response = await api.get(`users/${userId}/`);
+          setUsername(response.data.username || "Пользователь");
+        } catch (err) {
+          console.error("Failed to fetch username:", err);
+        }
+      }
+    };
+    if (isAuthenticated) {
+      fetchUsername();
+    }
+  }, [isAuthenticated]);
+
   const handleLogoClick = () => {
     navigate("/");
   };
 
-  // Функция для выхода из аккаунта
-  const handleLogout = async () => {
-    try {
-      await api.post("logout/", { refresh: localStorage.getItem("refreshToken") });
-    } catch (err) {
-      console.error("Logout failed:", err);
-    }
+  const handleLogout = () => {
+    // Skip API call to /logout/ since it doesn't exist in urls.py
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("userId");
     navigate("/login");
   };
 
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
   return (
     <header>
       <div className={styles.container}>
-        {/* Логотип */}
         <div
           className={styles.title}
           onClick={handleLogoClick}
@@ -46,33 +62,50 @@ const Nav = () => {
         <nav>
           <ul className={styles.menu}>
             {isAuthenticated ? (
-              <>
-                {/* Кнопка Профиль */}
-                <li className={styles.item}>
-                  <Link to="/profile" className={styles.link}>
-                    Профиль
-                  </Link>
-                </li>
-                {/* Кнопка Выход */}
-                <li className={styles.item}>
+              <li className={styles.item}>
+                <div className={styles.dropdown}>
                   <button
-                    onClick={handleLogout}
-                    className={styles.link} // Используем тот же стиль, что и для ссылок
-                    style={{ background: "none", border: "none", cursor: "pointer" }} // Убираем стандартный вид кнопки
+                    className={styles.link}
+                    onClick={toggleDropdown}
+                    aria-expanded={dropdownOpen}
+                    aria-haspopup="true"
                   >
-                    Выход
+                    {username} <span className={styles.caret}>▼</span>
                   </button>
-                </li>
-              </>
+                  {dropdownOpen && (
+                    <ul className={styles.dropdownMenu}>
+                      <li>
+                        <Link to="/profile" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
+                          Профиль
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/admin" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
+                          Панель администратора
+                        </Link>
+                      </li>
+                      <li>
+                        <button
+                          onClick={() => {
+                            handleLogout();
+                            setDropdownOpen(false);
+                          }}
+                          className={styles.dropdownLink}
+                        >
+                          Выход
+                        </button>
+                      </li>
+                    </ul>
+                  )}
+                </div>
+              </li>
             ) : (
               <>
-                {/* Кнопка Войти */}
                 <li className={styles.item}>
                   <Link to="/login" className={styles.link}>
                     Войти
                   </Link>
                 </li>
-                {/* Кнопка Зарегистрироваться */}
                 <li className={styles.item}>
                   <Link to="/register" className={styles.link}>
                     Зарегистрироваться

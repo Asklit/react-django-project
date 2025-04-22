@@ -1,12 +1,12 @@
 .admin_container {
-  background-color: #35373e;
-  color: #dcdee3;
+  background-color: var(--background);
+  color: var(--text);
   padding: 20px;
   min-height: 100vh;
 }
 
 .admin_title {
-  color: #dcdee3;
+  color: var(--text);
   font-size: 1.5rem;
   padding: 1rem;
   margin: auto;
@@ -21,21 +21,21 @@
 }
 
 .admin_tab {
-  background-color: #2c2f33;
-  border: 1px solid #4f545c;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 1rem;
   padding: 15px 30px;
   margin: 8px;
   cursor: pointer;
-  color: #dcdee3;
+  color: var(--text);
   transition: all 0.2s ease-in-out;
 }
 
 .admin_tab.active, .admin_tab:hover {
-  background-color: #4f545c;
-  border: 1px solid #2c2f33;
-  color: #dcdee3;
+  background-color: var(--border);
+  border: 1px solid var(--surface);
+  color: var(--text);
 }
 
 .admin_form {
@@ -47,29 +47,29 @@
 }
 
 .admin_input {
-  border: 1px solid #4f545c;
+  border: 1px solid var(--border);
   display: inline-block;
   width: calc(100% - 16px);
   padding: 15px 30px;
   margin: 8px;
   margin-bottom: 10px;
-  background-color: #2c2f33;
-  color: #dcdee3;
+  background-color: var(--surface);
+  color: var(--text);
   border-radius: 4px;
   font-size: 1rem;
   transition: background-color 0.3s;
 }
 
 .admin_input:focus {
-  background-color: #4f545c;
+  background-color: var(--border);
 }
 
 .admin_button {
-  color: #dcdee3;
+  color: var(--text);
   text-decoration: none;
   display: inline-block;
-  background-color: #4f545c;
-  border: 1px solid #2c2f33;
+  background-color: var(--border);
+  border: 1px solid var(--surface);
   transition: background-color 0.3s;
   border-radius: 4px;
   font-size: 1rem;
@@ -80,12 +80,12 @@
 }
 
 .admin_button:hover {
-  background-color: #5a65ea;
-  color: #dcdee3;
+  background-color: var(--primary);
+  color: var(--text);
 }
 
 .error {
-  color: #ff4081;
+  color: var(--error);
   font-size: 0.875rem;
   margin-top: 5px;
   display: block;
@@ -107,19 +107,19 @@
 
 .admin_table th, .admin_table td {
   font-size: 1rem;
-  border: 1px solid #4f545c;
+  border: 1px solid var(--border);
 }
 
 .admin_table th {
   padding: 15px 30px;
-  background-color: #292b30;
-  color: #dcdee3;
+  background-color: var(--surface-dark);
+  color: var(--text);
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
 .admin_table th:hover {
-  background-color: #4f545c;
+  background-color: var(--border);
 }
 
 .admin_table td > div:not(.date-display), 
@@ -129,7 +129,7 @@
   height: 64px;
   display: inline-block;
   padding: 15px 30px;
-  color: #dcdee3;
+  color: var(--text);
   background-color: transparent;
   border: none;
   transition: background-color 0.3s, color 0.3s;
@@ -137,19 +137,19 @@
 
 .admin_table td > div:not(.date-display):focus, 
 .admin_table td input:focus {
-  background-color: #4f545c;
+  background-color: var(--border);
   outline: none;
 }
 
 .admin_table td > div:not(.date-display):empty:before, 
 .admin_table td input:empty:before {
   content: attr(data-placeholder); 
-  color: #aaa;
+  color: var(--text-muted);
 }
 
 .date-display {
   padding: 15px 30px;
-  color: #dcdee3;
+  color: var(--text);
   height: auto;
   width: 100%;
 }
@@ -160,7 +160,7 @@
 }
 
 .cell {
-  border: 1px solid #2c2f33;
+  border: 1px solid var(--surface);
   transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.2s ease;
 }
 
@@ -173,9 +173,9 @@
 }
 
 .hoveredCell {
-  background-color: #5a65ea;
+  background-color: var(--primary);
   box-shadow: 0 0 8px rgba(90, 101, 234, 0.5);
-  border-color: #677eb8;
+  border-color: var(--secondary);
 }
 
 .admin_table .hoveredRow .cell,
@@ -184,7 +184,7 @@
 }
 
 .admin_table .hoveredCell {
-  border-color: #677eb8;
+  border-color: var(--secondary);
 }
 
 .admin_table td input[type="text"] {
@@ -213,28 +213,28 @@
 
 .icon {
   font-size: 2rem;
-  color: #dcdee3;
+  color: var(--text);
   cursor: pointer;
   transition: color 0.3s;
 }
 
 .icon:hover {
-  color: #ff4081;
+  color: var(--error);
 }
 
 .admin_actionButton {
-  background-color: #5a65ea;
+  background-color: var(--primary);
   border: none;
   padding: 6px 12px;
   cursor: pointer;
-  color: #dcdee3;
+  color: var(--text);
   margin-right: 5px;
   border-radius: 4px;
   transition: all 0.2s ease-in-out;
 }
 
 .admin_actionButton:hover {
-  background-color: #677eb8;
+  background-color: var(--secondary);
 }
 
 .accordion {
@@ -243,18 +243,18 @@
 
 .levelHeader {
   padding: 15px 30px;
-  background: #2c2f33;
+  background: var(--surface);
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #4f545c;
-  color: #dcdee3;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
   transition: background-color 0.3s;
 }
 
 .levelHeader:hover {
-  background: #4f545c;
+  background: var(--border);
 }
 
 .levelHeader h3 {
@@ -274,14 +274,14 @@
 }
 
 .checkbox_wrapper .background {
-  fill: #ccc;
+  fill: var(--text-muted);
   transition: ease all 0.6s;
   -webkit-transition: ease all 0.6s;
 }
 
 .checkbox_wrapper .stroke {
   fill: none;
-  stroke: #fff;
+  stroke: var(--text);
   stroke-miterlimit: 10;
   stroke-width: 2px;
   stroke-dashoffset: 100;
@@ -292,7 +292,7 @@
 
 .checkbox_wrapper .check {
   fill: none;
-  stroke: #fff;
+  stroke: var(--text);
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 2px;
@@ -323,7 +323,7 @@
 }
 
 .checkbox_wrapper input[type=checkbox]:checked + svg .background {
-  fill: #5a65ea;
+  fill: var(--primary);
 }
 
 .checkbox_wrapper input[type=checkbox]:checked + svg .stroke {
@@ -332,7 +332,7 @@
 
 .checkbox_wrapper input[type=checkbox]:checked + svg .check {
   stroke-dashoffset: 0;
-  stroke: #dcdee3;
+  stroke: var(--text);
 }
 
 .admin_table th {
@@ -353,11 +353,11 @@
 }
 
 .admin_table th.asc::after {
-  border-bottom: 4px solid #dcdee3;
+  border-bottom: 4px solid var(--text);
 }
 
 .admin_table th.desc::after {
-  border-top: 4px solid #dcdee3;
+  border-top: 4px solid var(--text);
 }
 
 .admin_table th, .admin_table td {
