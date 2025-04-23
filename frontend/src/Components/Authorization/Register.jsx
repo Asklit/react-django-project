@@ -11,16 +11,17 @@ const Register = () => {
     english_level: 'A1',
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setErrors({ ...errors, [e.target.name]: null });
   };
 
   const handleSubmit = async () => {
     setLoading(true);
-    setError(null);
+    setErrors({});
 
     try {
       const response = await api.post('auth/register/', {
@@ -36,7 +37,11 @@ const Register = () => {
       
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Ошибка регистрации');
+      if (err.response?.data?.errors) {
+        setErrors(err.response.data.errors);
+      } else {
+        setErrors({ general: 'Ошибка регистрации. Пожалуйста, попробуйте снова.' });
+      }
     } finally {
       setLoading(false);
     }
@@ -52,38 +57,41 @@ const Register = () => {
             name="username"
             type="text"
             required
-            className={styles.authInput}
+            className={`${styles.authInput} ${errors.username ? styles.inputError : ''}`}
             placeholder="Имя пользователя"
             value={formData.username}
             onChange={handleChange}
             disabled={loading}
           />
+          {errors.username && <span className={styles.error}>{errors.username}</span>}
           
           <input
             name="email"
             type="email"
             required
-            className={styles.authInput}
+            className={`${styles.authInput} ${errors.email ? styles.inputError : ''}`}
             placeholder="Электронная почта"
             value={formData.email}
             onChange={handleChange}
             disabled={loading}
           />
+          {errors.email && <span className={styles.error}>{errors.email}</span>}
           
           <input
             name="password"
             type="password"
             required
-            className={styles.authInput}
+            className={`${styles.authInput} ${errors.password ? styles.inputError : ''}`}
             placeholder="Пароль"
             value={formData.password}
             onChange={handleChange}
             disabled={loading}
           />
+          {errors.password && <span className={styles.error}>{errors.password}</span>}
           
           <select
             name="english_level"
-            className={styles.authInput}
+            className={`${styles.authInput} ${errors.english_level ? styles.inputError : ''}`}
             value={formData.english_level}
             onChange={handleChange}
             disabled={loading}
@@ -95,12 +103,9 @@ const Register = () => {
             <option value="C1">C1 - Продвинутый</option>
             <option value="C2">C2 - Профессиональный</option>
           </select>
+          {errors.english_level && <span className={styles.error}>{errors.english_level}</span>}
 
-          {error && (
-            <span className={styles.error}>
-              {typeof error === 'object' ? JSON.stringify(error) : error}
-            </span>
-          )}
+          {errors.general && <span className={styles.error}>{errors.general}</span>}
 
           <button
             onClick={handleSubmit}

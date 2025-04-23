@@ -6,24 +6,29 @@ import styles from "../styles/nav.module.css";
 const Nav = () => {
   const navigate = useNavigate();
   const isAuthenticated = !!localStorage.getItem("accessToken");
-  const [username, setUsername] = useState("Пользователь");
+  const [username, setUsername] = useState(null); // null indicates loading
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Fetch username when authenticated
   useEffect(() => {
     const fetchUsername = async () => {
       const userId = localStorage.getItem("userId");
-      if (userId) {
-        try {
-          const response = await api.get(`users/${userId}/`);
-          setUsername(response.data.username || "Пользователь");
-        } catch (err) {
-          console.error("Failed to fetch username:", err);
-        }
+      if (!userId) {
+        setUsername("Гость"); // Fallback if userId is missing
+        return;
+      }
+      try {
+        const response = await api.get(`users/${userId}/`);
+        setUsername(response.data.username || "Гость");
+      } catch (err) {
+        console.error("Failed to fetch username:", err);
+        setUsername("Гость"); // Fallback on error
       }
     };
     if (isAuthenticated) {
       fetchUsername();
+    } else {
+      setUsername("Гость"); // Fallback for unauthenticated users
     }
   }, [isAuthenticated]);
 
@@ -32,7 +37,6 @@ const Nav = () => {
   };
 
   const handleLogout = () => {
-    // Skip API call to /logout/ since it doesn't exist in urls.py
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("userId");
@@ -70,7 +74,7 @@ const Nav = () => {
                     aria-expanded={dropdownOpen}
                     aria-haspopup="true"
                   >
-                    {username} <span className={styles.caret}>▼</span>
+                    {username || "Загрузка..."} <span className={styles.caret}>▼</span>
                   </button>
                   {dropdownOpen && (
                     <ul className={styles.dropdownMenu}>

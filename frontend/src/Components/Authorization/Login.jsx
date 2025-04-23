@@ -9,16 +9,17 @@ const Login = () => {
     password: '',
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setErrors({ ...errors, [e.target.name]: null });
   };
 
   const handleSubmit = async () => {
     setLoading(true);
-    setError(null);
+    setErrors({});
 
     try {
       const response = await api.post('auth/login/', {
@@ -32,7 +33,11 @@ const Login = () => {
       
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Ошибка входа');
+      if (err.response?.data?.errors) {
+        setErrors(err.response.data.errors);
+      } else {
+        setErrors({ general: 'Ошибка входа. Пожалуйста, попробуйте снова.' });
+      }
     } finally {
       setLoading(false);
     }
@@ -48,29 +53,27 @@ const Login = () => {
             name="email"
             type="email"
             required
-            className={styles.authInput}
+            className={`${styles.authInput} ${errors.email ? styles.inputError : ''}`}
             placeholder="Электронная почта"
             value={formData.email}
             onChange={handleChange}
             disabled={loading}
           />
+          {errors.email && <span className={styles.error}>{errors.email}</span>}
           
           <input
             name="password"
             type="password"
             required
-            className={styles.authInput}
+            className={`${styles.authInput} ${errors.password ? styles.inputError : ''}`}
             placeholder="Пароль"
             value={formData.password}
             onChange={handleChange}
             disabled={loading}
           />
+          {errors.password && <span className={styles.error}>{errors.password}</span>}
 
-          {error && (
-            <span className={styles.error}>
-              {typeof error === 'object' ? JSON.stringify(error) : error}
-            </span>
-          )}
+          {errors.general && <span className={styles.error}>{errors.general}</span>}
 
           <button
             onClick={handleSubmit}

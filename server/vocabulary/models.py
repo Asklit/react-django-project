@@ -15,27 +15,25 @@ class Words(models.Model):
     def __str__(self):
         return f"{self.word} ({self.word_level})"
 
-class LearnedWords(models.Model):
-    id_learned_word = models.AutoField(primary_key=True)
+class UserWordProgress(models.Model):
+    STAGE_CHOICES = (
+        ('introduction', 'Introduction'),
+        ('active_recall', 'Active Recall'),
+        ('consolidation', 'Consolidation'),
+        ('spaced_repetition', 'Spaced Repetition'),
+        ('active_usage', 'Active Usage'),
+    )
+
+    id_progress = models.AutoField(primary_key=True)
     word = models.ForeignKey(Words, on_delete=models.CASCADE)
     user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    stage = models.CharField(max_length=20, choices=STAGE_CHOICES, default='introduction')
+    interaction_count = models.IntegerField(default=0)
+    last_interaction = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "LearnedWords"
+        db_table = "UserWordProgress"
         unique_together = ('word', 'user')
 
     def __str__(self):
-        return f"LearnedWord: {self.word.word} by User: {self.user.email}"
-
-class WordsInProgress(models.Model):
-    id_word_in_progress = models.AutoField(primary_key=True)
-    word = models.ForeignKey(Words, on_delete=models.CASCADE)
-    user = models.ForeignKey(Users, on_delete=models.CASCADE)
-    number_views = models.IntegerField(default=0)
-
-    class Meta:
-        db_table = "WordsInProgress"
-        unique_together = ('word', 'user')
-
-    def __str__(self):
-        return f"WordInProgress: {self.word.word} by User: {self.user.email}"
+        return f"{self.word.word} ({self.stage}) by User: {self.user.email}"

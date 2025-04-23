@@ -15,17 +15,16 @@ const engToRusLayout = Object.fromEntries(
   Object.entries(rusToEngLayout).map(([rus, eng]) => [eng, rus])
 );
 
-const MAX_INPUT_LENGTH = 10; // Ограничение длины ввода
+const MAX_INPUT_LENGTH = 24;
 
-const Words = ({ word, translate, partOfSpeech, level, index, onComplete, onCardChange, totalWords }) => {
-  const [inputWord, setInputWord] = useState(""); // Поле ввода с правильными буквами
-  const [inputTranslate, setInputTranslate] = useState(""); // Поле ввода с правильными буквами
-  const [wordInputBuffer, setWordInputBuffer] = useState(""); // Буфер с исходным вводом пользователя для слова
-  const [translateInputBuffer, setTranslateInputBuffer] = useState(""); // Буфер с исходным вводом пользователя для перевода
+const Words = ({ word, translate, partOfSpeech, level, index, onComplete, onCardChange, onFirstInput, totalWords }) => {
+  const [inputWord, setInputWord] = useState("");
+  const [inputTranslate, setInputTranslate] = useState("");
+  const [wordInputBuffer, setWordInputBuffer] = useState("");
+  const [translateInputBuffer, setTranslateInputBuffer] = useState("");
   const inputWordRef = useRef(null);
   const inputTranslateRef = useRef(null);
 
-  // Устанавливаем фокус на первое слово первой карточки при монтировании
   useEffect(() => {
     if (index === 0) {
       inputWordRef.current.focus();
@@ -34,66 +33,106 @@ const Words = ({ word, translate, partOfSpeech, level, index, onComplete, onCard
 
   const handleChangeWord = (e) => {
     let value = e.target.value;
-    const lastChar = value[value.length - 1];
+    const prevValue = wordInputBuffer;
+    let newBuffer = prevValue;
 
-    // Транслитерация русской буквы в английскую, если введена
-    if (lastChar && /[а-яё]/i.test(lastChar)) {
-      const transliteratedChar = rusToEngLayout[lastChar.toLowerCase()] || lastChar;
-      value = value.slice(0, -1) + (lastChar === lastChar.toLowerCase() ? transliteratedChar : transliteratedChar.toUpperCase());
+    // Вызываем onFirstInput при первом вводе
+    if (prevValue === "" && value !== "") {
+      onFirstInput();
     }
 
-    // Обновляем буфер с учетом ограничения в 10 символов
-    if (value.length <= MAX_INPUT_LENGTH) {
-      setWordInputBuffer(value);
-    } else {
-      setWordInputBuffer(value.slice(0, MAX_INPUT_LENGTH));
+    if (value.length >= MAX_INPUT_LENGTH) {
+      return;
+    }
+
+    if (value.length > MAX_INPUT_LENGTH) {
       value = value.slice(0, MAX_INPUT_LENGTH);
+      e.target.value = value;
     }
 
-    // Подставляем правильные буквы в поле ввода
-    if (value.length <= word.length) {
-      setInputWord(word.slice(0, value.length));
-      e.target.value = word.slice(0, value.length);
-    } else {
-      // Если превышает длину слова, добавляем введенные символы в конец
-      const extraChars = value.slice(word.length);
-      setInputWord(word + extraChars);
-      e.target.value = word + extraChars;
+    if (value.length < prevValue.length) {
+      newBuffer = prevValue.slice(0, value.length);
+      setWordInputBuffer(newBuffer);
+
+      if (value.length <= word.length) {
+        setInputWord(word.slice(0, value.length));
+      } else {
+        const extraChars = value.slice(word.length);
+        setInputWord(word + extraChars);
+      }
+    } else if (value.length <= MAX_INPUT_LENGTH) {
+      const lastChar = value[value.length - 1];
+      let inputChar = lastChar;
+
+      if (lastChar && /[а-яё]/i.test(lastChar)) {
+        const transliteratedChar = rusToEngLayout[lastChar.toLowerCase()] || lastChar;
+        inputChar = lastChar === lastChar.toLowerCase() ? transliteratedChar : transliteratedChar.toUpperCase();
+      }
+
+      newBuffer = prevValue + inputChar;
+      setWordInputBuffer(newBuffer);
+
+      if (value.length <= word.length) {
+        setInputWord(word.slice(0, value.length));
+      } else {
+        const extraChars = value.slice(word.length);
+        setInputWord(word + extraChars);
+      }
     }
   };
 
   const handleChangeTranslate = (e) => {
     let value = e.target.value;
-    const lastChar = value[value.length - 1];
+    const prevValue = translateInputBuffer;
+    let newBuffer = prevValue;
 
-    // Транслитерация английской буквы в русскую, если введена
-    if (lastChar && /[a-z]/i.test(lastChar)) {
-      const transliteratedChar = engToRusLayout[lastChar.toLowerCase()] || lastChar;
-      value = value.slice(0, -1) + (lastChar === lastChar.toLowerCase() ? transliteratedChar : transliteratedChar.toUpperCase());
+    // Вызываем onFirstInput при первом вводе
+    if (prevValue === "" && value !== "") {
+      onFirstInput();
     }
 
-    // Обновляем буфер с учетом ограничения в 10 символов
-    if (value.length <= MAX_INPUT_LENGTH) {
-      setTranslateInputBuffer(value);
-    } else {
-      setTranslateInputBuffer(value.slice(0, MAX_INPUT_LENGTH));
+    if (value.length >= MAX_INPUT_LENGTH) {
+      return;
+    }
+
+    if (value.length > MAX_INPUT_LENGTH) {
       value = value.slice(0, MAX_INPUT_LENGTH);
+      e.target.value = value;
     }
 
-    // Подставляем правильные буквы в поле ввода
-    if (value.length <= translate.length) {
-      setInputTranslate(translate.slice(0, value.length));
-      e.target.value = translate.slice(0, value.length);
-    } else {
-      // Если превышает длину перевода, добавляем введенные символы в конец
-      const extraChars = value.slice(translate.length);
-      setInputTranslate(translate + extraChars);
-      e.target.value = translate + extraChars;
+    if (value.length < prevValue.length) {
+      newBuffer = prevValue.slice(0, value.length);
+      setTranslateInputBuffer(newBuffer);
+
+      if (value.length <= translate.length) {
+        setInputTranslate(translate.slice(0, value.length));
+      } else {
+        const extraChars = value.slice(translate.length);
+        setInputTranslate(translate + extraChars);
+      }
+    } else if (value.length <= MAX_INPUT_LENGTH) {
+      const lastChar = value[value.length - 1];
+      let inputChar = lastChar;
+
+      if (lastChar && /[a-z]/i.test(lastChar)) {
+        const transliteratedChar = engToRusLayout[lastChar.toLowerCase()] || lastChar;
+        inputChar = lastChar === lastChar.toLowerCase() ? transliteratedChar : transliteratedChar.toUpperCase();
+      }
+
+      newBuffer = prevValue + inputChar;
+      setTranslateInputBuffer(newBuffer);
+
+      if (value.length <= translate.length) {
+        setInputTranslate(translate.slice(0, value.length));
+      } else {
+        const extraChars = value.slice(translate.length);
+        setInputTranslate(translate + extraChars);
+      }
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" || e.key === "Tab") {
+    if (e.key === "Enter" || e.key === "Tab" || e.key === " ") {
       e.preventDefault();
       const isCorrect = inputWord === word && inputTranslate === translate;
       onComplete(index, isCorrect);
@@ -117,10 +156,12 @@ const Words = ({ word, translate, partOfSpeech, level, index, onComplete, onCard
 
   const renderWord = ({ string, buffer }) => {
     const renderedChars = [...string].map((char, index) => {
-      const inputChar = buffer[index]; // Используем буфер для проверки корректности
-      const isMatched = inputChar && (string[index].toLowerCase() === inputChar.toLowerCase() || 
-        (rusToEngLayout[inputChar.toLowerCase()] === string[index].toLowerCase()) || 
-        (engToRusLayout[inputChar.toLowerCase()] === string[index].toLowerCase()));
+      const inputChar = buffer[index];
+      const isMatched = inputChar && (
+        string[index].toLowerCase() === inputChar.toLowerCase() ||
+        (rusToEngLayout[inputChar.toLowerCase()] === string[index].toLowerCase()) ||
+        (engToRusLayout[inputChar.toLowerCase()] === string[index].toLowerCase())
+      );
       const color = isMatched ? "var(--text)" : inputChar ? "var(--error)" : "var(--text-muted)";
       return (
         <span key={index} style={{ color }}>

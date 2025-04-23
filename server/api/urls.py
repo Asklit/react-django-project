@@ -3,6 +3,7 @@ from .views import (
     UsersCreateView, UserDetailView, UsersListView,
     WordsCreateView, WordDetailView, WordsListView,
     AdminListCreateView, AdminDetailView,
+    UserStageWordsView, UpdateWordProgressView, StageCountsView
 )
 from authapp.views import RegisterView, LoginView
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -19,6 +20,10 @@ urlpatterns = [
     path('words/', WordsCreateView.as_view(), name='words-create'),
     path('words/list/', WordsListView.as_view(), name='words-list'),
     path('words/<int:pk>/', WordDetailView.as_view(), name='word-detail'),
+    
+    path('words/stage/', UserStageWordsView.as_view(), name='user-stage-words'),
+    path('words/progress/', UpdateWordProgressView.as_view(), name='update-word-progress'),
+    path('words/stage-counts/', StageCountsView.as_view(), name='stage-counts'),
     
     path('admins/', AdminListCreateView.as_view(), name='admin-list-create'),
     path('admins/<int:id_admin>/', AdminDetailView.as_view(), name='admin-detail'),
