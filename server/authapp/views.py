@@ -13,6 +13,7 @@ class RegisterView(views.APIView):
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
                 'user_id': user.id_user,
+                'username': user.username,  # Добавляем username в ответ
             }, status=status.HTTP_201_CREATED)
         return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -26,5 +27,6 @@ class LoginView(views.APIView):
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
                 'user_id': user.id_user,
+                'username': user.username,  # Добавляем username в ответ
             }, status=status.HTTP_200_OK)
         return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

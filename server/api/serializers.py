@@ -6,10 +6,10 @@ from django.contrib.auth.hashers import make_password
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = Users
-        fields = ['username', 'email', 'password_hash', 'english_level']
+        fields = ['username', 'email', 'password', 'english_level']
         extra_kwargs = {
-            'password_hash': {'write_only': True},
-            'email': {'validators': []}, 
+            'password': {'write_only': True},
+            'email': {'validators': []},
             'username': {'validators': []}
         }
 
@@ -38,8 +38,12 @@ class UserSerializer(serializers.ModelSerializer):
         if len(value) != 2:
             raise serializers.ValidationError("Формат уровня должен быть XX.")
         if value not in ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'a1', 'a2', 'b1', 'b2', 'c1', 'c2']:
-            raise serializers.ValidationError("Неправильный уровень анйглийского.")
+            raise serializers.ValidationError("Неправильный уровень английского.")
         return value
+
+    def create(self, validated_data):
+        validated_data['password'] = make_password(validated_data['password'])
+        return super().create(validated_data)
 
 class UserDetailsSerializer(serializers.ModelSerializer):
     class Meta:

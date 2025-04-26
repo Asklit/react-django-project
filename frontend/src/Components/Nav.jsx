@@ -1,36 +1,71 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from '../api';
 import styles from "../styles/nav.module.css";
 
 const Nav = () => {
   const navigate = useNavigate();
-  const isAuthenticated = !!localStorage.getItem("accessToken");
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("accessToken"));
   const [username, setUsername] = useState(null); // null indicates loading
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Fetch username when authenticated
-  useEffect(() => {
-    const fetchUsername = async () => {
-      const userId = localStorage.getItem("userId");
-      if (!userId) {
-        setUsername("Гость"); // Fallback if userId is missing
-        return;
+  // Функция для получения имени пользователя
+  const fetchUsername = useCallback(async () => {
+    const accessToken = localStorage.getItem("accessToken");
+    const userId = localStorage.getItem("userId");
+
+    // Проверяем наличие токена и userId
+    if (!accessToken || !userId) {
+      setUsername("Гость");
+      setIsAuthenticated(false);
+      return;
+    }
+
+    try {
+      const response = await api.get(`/users/${userId}/`);
+      if (response.data && response.data.username) {
+        setUsername(response.data.username);
+        setIsAuthenticated(true);
+      } else {
+        setUsername("Гость");
+        setIsAuthenticated(false);
       }
-      try {
-        const response = await api.get(`users/${userId}/`);
-        setUsername(response.data.username || "Гость");
-      } catch (err) {
-        console.error("Failed to fetch username:", err);
-        setUsername("Гость"); // Fallback on error
+    } catch (err) {
+      console.error("Failed to fetch username:", err);
+      setUsername("Гость");
+      setIsAuthenticated(false);
+
+      // Если ошибка 401, перехватчик в api.js уже перенаправит на /login,
+      // но мы дополнительно очищаем состояние
+      if (err.response?.status === 401) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userId");
+        navigate("/login");
+      }
+    }
+  }, [navigate]);
+
+  // Проверяем авторизацию и получаем username при монтировании и изменении состояния
+  useEffect(() => {
+    fetchUsername();
+  }, [fetchUsername]);
+
+  // Отслеживаем изменения в localStorage (на случай логина/регистрации)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const accessToken = localStorage.getItem("accessToken");
+      setIsAuthenticated(!!accessToken);
+      if (accessToken) {
+        fetchUsername();
+      } else {
+        setUsername("Гость");
       }
     };
-    if (isAuthenticated) {
-      fetchUsername();
-    } else {
-      setUsername("Гость"); // Fallback for unauthenticated users
-    }
-  }, [isAuthenticated]);
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [fetchUsername]);
 
   const handleLogoClick = () => {
     navigate("/");
@@ -40,6 +75,9 @@ const Nav = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("userId");
+    setIsAuthenticated(false);
+    setUsername("Гость");
+    setDropdownOpen(false);
     navigate("/login");
   };
 
@@ -90,10 +128,7 @@ const Nav = () => {
                       </li>
                       <li>
                         <button
-                          onClick={() => {
-                            handleLogout();
-                            setDropdownOpen(false);
-                          }}
+                          onClick={handleLogout}
                           className={styles.dropdownLink}
                         >
                           Выход

@@ -155,4 +155,6 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',                
 }
 
+AUTH_USER_MODEL = 'core.Users'
+
 SECRET_KEY = config('SECRET_KEY', default='your-secret-key-here')

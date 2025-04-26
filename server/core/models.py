@@ -1,19 +1,61 @@
 from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.utils.translation import gettext_lazy as _
 
-class Users(models.Model):
+class UserManager(BaseUserManager):
+    def create_user(self, email, username, password=None, **extra_fields):
+        if not email:
+            raise ValueError(_('The Email field must be set'))
+        if not username:
+            raise ValueError(_('The Username field must be set'))
+        email = self.normalize_email(email)
+        user = self.model(email=email, username=username, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, username, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_email_verificated', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError(_('Superuser must have is_staff=True.'))
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError(_('Superuser must have is_superuser=True.'))
+
+        return self.create_user(email, username, password, **extra_fields)
+
+class Users(AbstractBaseUser, PermissionsMixin):
     id_user = models.AutoField(primary_key=True)
-    username = models.CharField(max_length=20, unique=True, error_messages={
-        'max_length': 'Неверный формат имени пользователя.'})
-    email = models.CharField(max_length=20, unique=True, error_messages={
-        'max_length': 'Неверный формат электронной почты.'})
-    password_hash = models.CharField()
-    english_level = models.CharField(max_length=2, error_messages={
-        'max_length': 'Убедитесь, что это поле не содержит более 2 символов.'})
+    username = models.CharField(
+        max_length=20,
+        unique=True,
+        error_messages={'max_length': 'Неверный формат имени пользователя.'}
+    )
+    email = models.CharField(
+        max_length=20,
+        unique=True,
+        error_messages={'max_length': 'Неверный формат электронной почты.'}
+    )
+    english_level = models.CharField(
+        max_length=2,
+        error_messages={'max_length': 'Убедитесь, что это поле не содержит более 2 символов.'}
+    )
     is_email_verificated = models.BooleanField(default=False)
     account_created_at = models.DateTimeField(auto_now_add=True)
     password_changed_at = models.DateTimeField(auto_now=True)
     last_day_online = models.DateTimeField(auto_now_add=True)
     days_in_berserk = models.IntegerField(default=0)
+    
+    # Поля, необходимые для кастомной модели пользователя
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+
+    objects = UserManager()
+
+    USERNAME_FIELD = 'email'  # Поле, используемое для логина
+    REQUIRED_FIELDS = ['username', 'english_level']
 
     class Meta:
         db_table = "Users"

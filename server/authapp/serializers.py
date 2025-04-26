@@ -49,8 +49,13 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return value.upper()
 
     def create(self, validated_data):
-        validated_data['password_hash'] = make_password(validated_data.pop('password'))
-        return Users.objects.create(**validated_data)
+        user = Users.objects.create_user(
+            email=validated_data['email'],
+            username=validated_data['username'],
+            password=validated_data['password'],
+            english_level=validated_data['english_level']
+        )
+        return user
 
 class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -70,7 +75,7 @@ class UserLoginSerializer(serializers.Serializer):
         except Users.DoesNotExist:
             raise serializers.ValidationError({"email": "Пользователь с этим адресом электронной почты не найден."})
 
-        if not check_password(password, user.password_hash):
+        if not check_password(password, user.password):
             raise serializers.ValidationError({"password": "Неверный пароль."})
 
         data['user'] = user
