@@ -18,10 +18,12 @@
 
 .wpmContainer {
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-lg);
-    flex-wrap: wrap;
+    width: 100%;
+    max-width: 600px;
 }
 
 .stats {
@@ -47,7 +49,15 @@
     text-align: center;
 }
 
-.levelSelect {
+.controls {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.levelSelect,
+.stageSelect {
     background-color: var(--surface);
     color: var(--text);
     border: 1px solid var(--primary);
@@ -59,7 +69,8 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.levelSelect:focus {
+.levelSelect:focus,
+.stageSelect:focus {
     outline: none;
     border-color: var(--secondary);
 }

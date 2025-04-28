@@ -12,7 +12,10 @@ const Main = () => {
   const [timer, setTimer] = useState(0);
   const [timerInterval, setTimerInterval] = useState(null);
   const [selectedLevel, setSelectedLevel] = useState("all");
+  const [selectedStage, setSelectedStage] = useState("all"); // Для стадий изучения
   const MAX_CARDS = 5;
+
+  const isAuthenticated = !!localStorage.getItem("accessToken");
 
   const levelOptions = [
     { value: "all", label: "All Levels" },
@@ -24,13 +27,29 @@ const Main = () => {
     { value: "C2", label: "C2" },
   ];
 
+  const stageOptions = [
+    { value: "all", label: "All Stages" },
+    { value: "introduction", label: "Introduction" },
+    { value: "active_recall", label: "Active Recall" },
+    { value: "consolidation", label: "Consolidation" },
+    { value: "spaced_repetition", label: "Spaced Repetition" },
+    { value: "active_usage", label: "Active Usage" },
+  ];
+
   useEffect(() => {
     const fetchWords = async () => {
       try {
-        const url =
-          "http://localhost:8000/api/words/list/" +
-          (selectedLevel !== "all" ? `?level=${selectedLevel}` : "");
-        const response = await axios.get(url);
+        let url = "http://localhost:8000/api/words/stage/";
+        const params = {};
+        if (selectedLevel !== "all") {
+          params.level = selectedLevel;
+        }
+        if (selectedStage !== "all" && isAuthenticated) {
+          params.stage = selectedStage;
+        } else {
+          url = "http://localhost:8000/api/words/list/";
+        }
+        const response = await axios.get(url, { params });
         setWordsList(response.data);
         setCurrentWords(getRandomWords(response.data, MAX_CARDS));
       } catch (error) {
@@ -38,7 +57,7 @@ const Main = () => {
       }
     };
     fetchWords();
-  }, [selectedLevel]);
+  }, [selectedLevel, selectedStage, isAuthenticated]);
 
   const getRandomWords = (words, count) => {
     const shuffled = [...words].sort(() => 0.5 - Math.random());
@@ -65,29 +84,68 @@ const Main = () => {
     }
   };
 
-  const handleWordComplete = (index, isCorrect) => {
+  const handleWordComplete = async (index, isCorrect) => {
     if (isCorrect) {
       setWordCount((prev) => prev + 2); // Увеличиваем на 2 (русское + английское слово)
       updateWpm();
+
+      // Отправляем запрос для обновления прогресса, если пользователь авторизован
+      if (isAuthenticated) {
+        try {
+          const wordId = currentWords[index].id_word;
+          await axios.post(
+            "http://localhost:8000/api/words/progress/",
+            { word_id: wordId, is_correct: true },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              },
+            }
+          );
+        } catch (error) {
+          console.error("Error updating word progress:", error);
+        }
+      }
     }
+    removeCardAndAddNew(index, isCorrect);
   };
 
-  const removeCardAndAddNew = (index) => {
+  const removeCardAndAddNew = (index, isCorrect) => {
     setCurrentWords((prev) => {
       const newWords = [...prev];
+      const completedWord = newWords[index];
       newWords.splice(index, 1);
+
+      // Проверяем, нужно ли добавить слово обратно
       const remainingWords = wordsList.filter(
         (w) => !newWords.some((nw) => nw.id_word === w.id_word)
       );
-      if (remainingWords.length > 0 && newWords.length < MAX_CARDS) {
+
+      if (isCorrect && remainingWords.length > 0) {
+        if (selectedStage !== "all" && newWords.length >= 4) {
+          // Если выбрана стадия и слов >= 4, добавляем в случайное место
+          const randomIndex = Math.floor(Math.random() * newWords.length);
+          newWords.splice(randomIndex, 0, completedWord);
+        } else {
+          // Иначе добавляем в конец или оставляем одно слово
+          newWords.push(completedWord);
+        }
+      } else if (remainingWords.length > 0 && newWords.length < MAX_CARDS) {
+        // Добавляем новое слово, если слов недостаточно
         newWords.push(getRandomWords(remainingWords, 1)[0]);
       }
+
       return newWords;
     });
   };
 
   const handleLevelChange = (event) => {
     setSelectedLevel(event.target.value);
+    resetWpm();
+  };
+
+  const handleStageChange = (event) => {
+    setSelectedStage(event.target.value);
     resetWpm();
   };
 
@@ -115,20 +173,35 @@ const Main = () => {
           <span>WPM: {wpm}</span>
           <span>Time: {formatTimer(timer)}</span>
         </div>
-        <select
-          value={selectedLevel}
-          onChange={handleLevelChange}
-          className={styles.levelSelect}
-        >
-          {levelOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <button className={styles.resetButton} onClick={resetWpm}>
-          Сбросить
-        </button>
+        <div className={styles.controls}>
+          <select
+            value={selectedLevel}
+            onChange={handleLevelChange}
+            className={styles.levelSelect}
+          >
+            {levelOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {isAuthenticated && (
+            <select
+              value={selectedStage}
+              onChange={handleStageChange}
+              className={styles.stageSelect}
+            >
+              {stageOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          )}
+          <button className={styles.resetButton} onClick={resetWpm}>
+            Сбросить
+          </button>
+        </div>
       </div>
       <div className={styles.wordsList}>
         {currentWords.map((wordData, index) => (

@@ -5,7 +5,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(
-  async (config) => {
+  (config) => {
     const accessToken = localStorage.getItem("accessToken");
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
@@ -24,18 +24,24 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem("refreshToken");
       if (refreshToken) {
         try {
-          const { data } = await axios.post("http://localhost:8000/api/token/refresh/", {
+          const { data } = await axios.post("http://localhost:8000/auth/token/refresh/", {
             refresh: refreshToken,
           });
           localStorage.setItem("accessToken", data.access);
-          localStorage.setItem("refreshToken", data.refresh);
+          // simplejwt не всегда возвращает новый refresh токен
+          if (data.refresh) {
+            localStorage.setItem("refreshToken", data.refresh);
+          }
           originalRequest.headers.Authorization = `Bearer ${data.access}`;
           return api(originalRequest);
         } catch (e) {
-          console.error("Refresh token expired or invalid", e);
+          console.error("Refresh token expired or invalid:", e);
           localStorage.clear();
           window.location.href = "/login";
         }
+      } else {
+        localStorage.clear();
+        window.location.href = "/login";
       }
     }
     return Promise.reject(error);

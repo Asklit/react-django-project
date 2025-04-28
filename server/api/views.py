@@ -3,9 +3,9 @@ from rest_framework.response import Response
 from core.models import Users, Admins
 from vocabulary.models import Words, UserWordProgress
 from .serializers import UserSerializer, UserDetailsSerializer, WordSerializer, AdminSerializer, AdminCreateSerializer
-from django.contrib.auth.hashers import make_password
 from rest_framework.permissions import IsAuthenticated
 
+# Константы для количества итераций для перехода на следующий уровень
 STAGE_TRANSITIONS = {
     'introduction': {'next_stage': 'active_recall', 'interactions_needed': 1},
     'active_recall': {'next_stage': 'consolidation', 'interactions_needed': 3},
@@ -21,11 +21,7 @@ class UsersCreateView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save(
-                password_hash=make_password(request.data['password_hash']),
-                is_email_verificated=False,
-                days_in_berserk=0,
-            )
+            user = serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -41,8 +37,9 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
         user = self.get_object()
         serializer = self.get_serializer(user, data=request.data, partial=True)
         if serializer.is_valid():
-            if 'password_hash' in request.data:
-                user.password_hash = make_password(request.data['password_hash'])
+            if 'password' in request.data:
+                user.set_password(request.data['password'])
+                user.save()
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -108,7 +105,7 @@ class AdminDetailView(generics.RetrieveUpdateDestroyAPIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
 class UserStageWordsView(generics.ListAPIView):
     serializer_class = WordSerializer
     permission_classes = [IsAuthenticated]
@@ -158,10 +155,10 @@ class UpdateWordProgressView(generics.GenericAPIView):
         progress, created = UserWordProgress.objects.get_or_create(
             user=user,
             word=word,
-            defaults={'stage': 'active_recall', 'interaction_count': 1}
+            defaults={'stage': 'introduction', 'interaction_count': 1}  # Начинаем с introduction
         )
 
-        if not created:
+        if not created and is_correct:
             progress.interaction_count += 1
             current_stage = progress.stage
             transition_info = STAGE_TRANSITIONS.get(current_stage)
