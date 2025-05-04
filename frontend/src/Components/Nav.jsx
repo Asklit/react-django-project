@@ -16,7 +16,7 @@ const Nav = () => {
 
     // Проверяем наличие токена и userId
     if (!accessToken || !userId) {
-      setUsername("Гость");
+      setUsername("Loading");
       setIsAuthenticated(false);
       return;
     }
@@ -32,7 +32,7 @@ const Nav = () => {
       }
     } catch (err) {
       console.error("Failed to fetch username:", err);
-      setUsername("Гость");
+      setUsername("Loading");
       setIsAuthenticated(false);
 
       // Если ошибка 401, перехватчик в api.js уже перенаправит на /login,

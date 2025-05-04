@@ -1,42 +1,122 @@
 import React, { useState, useRef, useEffect } from "react";
 import styles from "../styles/MainPageWords.module.css";
 
-// Таблица соответствия стандартной раскладки (русская → английская)
 const rusToEngLayout = {
-  "й": "q", "ц": "w", "у": "e", "к": "r", "е": "t", "н": "y", "г": "u", "ш": "i",
-  "щ": "o", "з": "p", "х": "[", "ъ": "]", "ф": "a", "ы": "s", "в": "d", "а": "f",
-  "п": "g", "р": "h", "о": "j", "л": "k", "д": "l", "ж": ";", "э": "'", "я": "z",
-  "ч": "x", "с": "c", "м": "v", "и": "b", "т": "n", "ь": "m", "б": ",", "ю": ".",
-  ".": "/", "ё": "`"
+  "й": "q",
+  "ц": "w",
+  "у": "e",
+  "к": "r",
+  "е": "t",
+  "н": "y",
+  "г": "u",
+  "ш": "i",
+  "щ": "o",
+  "з": "p",
+  "х": "[",
+  "ъ": "]",
+  "ф": "a",
+  "ы": "s",
+  "в": "d",
+  "а": "f",
+  "п": "g",
+  "р": "h",
+  "о": "j",
+  "л": "k",
+  "д": "l",
+  "ж": ";",
+  "э": "'",
+  "я": "z",
+  "ч": "x",
+  "с": "c",
+  "м": "v",
+  "и": "b",
+  "т": "n",
+  "ь": "m",
+  "б": ",",
+  "ю": ".",
+  ".": "/",
+  "ё": "`",
 };
 
-// Обратная таблица (английская → русская)
 const engToRusLayout = Object.fromEntries(
   Object.entries(rusToEngLayout).map(([rus, eng]) => [eng, rus])
 );
 
 const MAX_INPUT_LENGTH = 24;
 
-const Words = ({ word, translate, partOfSpeech, level, index, onComplete, onCardChange, onFirstInput, totalWords }) => {
+const Words = ({
+  word,
+  translate,
+  partOfSpeech,
+  level,
+  index,
+  onComplete,
+  onCardChange,
+  onFirstInput,
+  incrementWordCount,
+  totalWords,
+}) => {
   const [inputWord, setInputWord] = useState("");
   const [inputTranslate, setInputTranslate] = useState("");
   const [wordInputBuffer, setWordInputBuffer] = useState("");
   const [translateInputBuffer, setTranslateInputBuffer] = useState("");
+  const [countedWords, setCountedWords] = useState(new Set());
   const inputWordRef = useRef(null);
   const inputTranslateRef = useRef(null);
 
+  // Reset countedWords when the card is re-rendered with new word or translate
   useEffect(() => {
-    if (index === 0) {
+    setCountedWords(new Set());
+    setInputWord("");
+    setInputTranslate("");
+    setWordInputBuffer("");
+    setTranslateInputBuffer("");
+  }, [word, translate]);
+
+  useEffect(() => {
+    if (index === 0 && inputWordRef.current) {
       inputWordRef.current.focus();
     }
   }, [index]);
+
+  const clearInputs = () => {
+    setInputWord("");
+    setInputTranslate("");
+    setWordInputBuffer("");
+    setTranslateInputBuffer("");
+  };
+
+  const countSpaces = (str) => {
+    return (str.match(/ /g) || []).length;
+  };
+
+  const getSubstringUpToNthSpace = (str, n) => {
+    let spaceCount = 0;
+    for (let i = 0; i < str.length; i++) {
+      if (str[i] === " ") {
+        spaceCount++;
+        if (spaceCount === n) {
+          return str.slice(0, i + 1);
+        }
+      }
+    }
+    return str;
+  };
+
+  const checkWordCorrectness = (buffer, target) => {
+    const bufferWords = buffer.trim().split(/\s+/).filter((w) => w.length > 0);
+    const targetWords = target.trim().split(/\s+/).filter((w) => w.length > 0);
+    const lastBufferWord = bufferWords[bufferWords.length - 1]?.toLowerCase();
+    const lastTargetWord = targetWords[bufferWords.length - 1]?.toLowerCase();
+    const isCorrect = lastBufferWord === lastTargetWord;
+    return isCorrect;
+  };
 
   const handleChangeWord = (e) => {
     let value = e.target.value;
     const prevValue = wordInputBuffer;
     let newBuffer = prevValue;
 
-    // Вызываем onFirstInput при первом вводе
     if (prevValue === "" && value !== "") {
       onFirstInput();
     }
@@ -66,7 +146,10 @@ const Words = ({ word, translate, partOfSpeech, level, index, onComplete, onCard
 
       if (lastChar && /[а-яё]/i.test(lastChar)) {
         const transliteratedChar = rusToEngLayout[lastChar.toLowerCase()] || lastChar;
-        inputChar = lastChar === lastChar.toLowerCase() ? transliteratedChar : transliteratedChar.toUpperCase();
+        inputChar =
+          lastChar === lastChar.toLowerCase()
+            ? transliteratedChar
+            : transliteratedChar.toUpperCase();
       }
 
       newBuffer = prevValue + inputChar;
@@ -86,7 +169,6 @@ const Words = ({ word, translate, partOfSpeech, level, index, onComplete, onCard
     const prevValue = translateInputBuffer;
     let newBuffer = prevValue;
 
-    // Вызываем onFirstInput при первом вводе
     if (prevValue === "" && value !== "") {
       onFirstInput();
     }
@@ -116,7 +198,10 @@ const Words = ({ word, translate, partOfSpeech, level, index, onComplete, onCard
 
       if (lastChar && /[a-z]/i.test(lastChar)) {
         const transliteratedChar = engToRusLayout[lastChar.toLowerCase()] || lastChar;
-        inputChar = lastChar === lastChar.toLowerCase() ? transliteratedChar : transliteratedChar.toUpperCase();
+        inputChar =
+          lastChar === lastChar.toLowerCase()
+            ? transliteratedChar
+            : transliteratedChar.toUpperCase();
       }
 
       newBuffer = prevValue + inputChar;
@@ -134,22 +219,72 @@ const Words = ({ word, translate, partOfSpeech, level, index, onComplete, onCard
   const handleKeyDown = (e) => {
     if (e.key === "Enter" || e.key === "Tab" || e.key === " ") {
       e.preventDefault();
-      const isCorrect = inputWord === word && inputTranslate === translate;
-      onComplete(index, isCorrect);
+
       if (e.target === inputWordRef.current) {
-        inputTranslateRef.current.focus();
-      } else if (index < totalWords - 1) {
-        onCardChange(index);
-        document.querySelectorAll(`.${styles.inputWord}`)[(index + 1) * 2].focus();
+        const bufferSpaces = countSpaces(wordInputBuffer);
+        const wordSpaces = countSpaces(word);
+
+        if (e.key === " " && bufferSpaces < wordSpaces) {
+          const targetSubstring = getSubstringUpToNthSpace(word, bufferSpaces + 1);
+          setWordInputBuffer(targetSubstring);
+          setInputWord(targetSubstring);
+          return;
+        }
+
+        const isWordCorrect = checkWordCorrectness(wordInputBuffer, word);
+        if (isWordCorrect && !countedWords.has(word)) {
+          console.log("Words: Word correct, incrementing count for", word);
+          incrementWordCount(word);
+          setCountedWords((prev) => new Set(prev).add(word));
+        }
+
+        inputTranslateRef.current?.focus();
       } else {
-        onCardChange(index);
+        const bufferSpaces = countSpaces(translateInputBuffer);
+        const translateSpaces = countSpaces(translate);
+
+        if (e.key === " " && bufferSpaces < translateSpaces) {
+          const targetSubstring = getSubstringUpToNthSpace(translate, bufferSpaces + 1);
+          setTranslateInputBuffer(targetSubstring);
+          setInputTranslate(targetSubstring);
+          return;
+        }
+
+        const isTranslateCorrect = checkWordCorrectness(translateInputBuffer, translate);
+        if (isTranslateCorrect && !countedWords.has(translate)) {
+          console.log("Words: Translate correct, incrementing count for", translate);
+          incrementWordCount(translate);
+          setCountedWords((prev) => new Set(prev).add(translate));
+        }
+
+        const isCorrect = wordInputBuffer === word && translateInputBuffer === translate;
+        console.log("Words: handleKeyDown, isCorrect =", isCorrect, "wordInputBuffer =", wordInputBuffer, "translateInputBuffer =", translateInputBuffer);
+
+        onComplete(index, isCorrect);
+        clearInputs();
+
+        // Фокус на первую карточку после завершения
+        if (index < totalWords - 1) {
+          const nextInput = document.querySelectorAll(`.${styles.inputWord}`)[(index + 1) * 2];
+          if (nextInput) {
+            nextInput.focus();
+          }
+        } else {
+          const firstInput = document.querySelector(`.${styles.inputWord}`);
+          if (firstInput) {
+            firstInput.focus();
+          }
+        }
       }
     } else if (e.key === "Backspace") {
       if (e.target === inputWordRef.current && inputWord === "" && index > 0) {
-        document.querySelectorAll(`.${styles.inputWord}`)[(index - 1) * 2].focus();
+        const prevInput = document.querySelectorAll(`.${styles.inputWord}`)[(index - 1) * 2];
+        if (prevInput) {
+          prevInput.focus();
+        }
       } else if (e.target === inputTranslateRef.current && inputTranslate === "") {
-        inputWordRef.current.focus();
-        inputWordRef.current.setSelectionRange(inputWord.length, inputWord.length);
+        inputWordRef.current?.focus();
+        inputWordRef.current?.setSelectionRange(inputWord.length, inputWord.length);
       }
     }
   };
@@ -157,12 +292,16 @@ const Words = ({ word, translate, partOfSpeech, level, index, onComplete, onCard
   const renderWord = ({ string, buffer }) => {
     const renderedChars = [...string].map((char, index) => {
       const inputChar = buffer[index];
-      const isMatched = inputChar && (
-        string[index].toLowerCase() === inputChar.toLowerCase() ||
-        (rusToEngLayout[inputChar.toLowerCase()] === string[index].toLowerCase()) ||
-        (engToRusLayout[inputChar.toLowerCase()] === string[index].toLowerCase())
-      );
-      const color = isMatched ? "var(--text)" : inputChar ? "var(--error)" : "var(--text-muted)";
+      const isMatched =
+        inputChar &&
+        (string[index].toLowerCase() === inputChar.toLowerCase() ||
+          rusToEngLayout[inputChar.toLowerCase()] === string[index].toLowerCase() ||
+          engToRusLayout[inputChar.toLowerCase()] === string[index].toLowerCase());
+      const color = isMatched
+        ? "var(--text)"
+        : inputChar
+        ? "var(--error)"
+        : "var(--text-muted)";
       return (
         <span key={index} style={{ color }}>
           {char}
@@ -197,7 +336,9 @@ const Words = ({ word, translate, partOfSpeech, level, index, onComplete, onCard
             onKeyDown={handleKeyDown}
             spellCheck="false"
           />
-          <div className={styles.word}>{renderWord({ string: word, buffer: wordInputBuffer })}</div>
+          <div className={styles.word}>
+            {renderWord({ string: word, buffer: wordInputBuffer })}
+          </div>
         </div>
         <div className={styles.wrapper}>
           <input
@@ -208,7 +349,9 @@ const Words = ({ word, translate, partOfSpeech, level, index, onComplete, onCard
             onKeyDown={handleKeyDown}
             spellCheck="false"
           />
-          <div className={styles.word}>{renderWord({ string: translate, buffer: translateInputBuffer })}</div>
+          <div className={styles.word}>
+            {renderWord({ string: translate, buffer: translateInputBuffer })}
+          </div>
         </div>
       </div>
     </div>

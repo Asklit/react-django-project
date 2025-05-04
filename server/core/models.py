@@ -48,13 +48,12 @@ class Users(AbstractBaseUser, PermissionsMixin):
     last_day_online = models.DateTimeField(auto_now_add=True)
     days_in_berserk = models.IntegerField(default=0)
     
-    # Поля, необходимые для кастомной модели пользователя
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
     objects = UserManager()
 
-    USERNAME_FIELD = 'email'  # Поле, используемое для логина
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'english_level']
 
     class Meta:
@@ -74,3 +73,15 @@ class Admins(models.Model):
 
     def __str__(self):
         return f"{self.id_admin.username} {self.first_name} {self.surname}"
+
+class UserActivity(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='activities')
+    date = models.DateField()
+    word_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = "UserActivity"
+        unique_together = ('user', 'date')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date}: {self.word_count} words"

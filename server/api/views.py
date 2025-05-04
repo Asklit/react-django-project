@@ -1,17 +1,21 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
-from core.models import Users, Admins
+from core.models import Users, Admins, UserActivity
 from vocabulary.models import Words, UserWordProgress
 from .serializers import UserSerializer, UserDetailsSerializer, WordSerializer, AdminSerializer, AdminCreateSerializer
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from datetime import date
+from config import ACTIVITY_WORD_THRESHOLD
+from django.db import models
+from django.db.models import F
+from django.utils import timezone
 
-# Константы для количества итераций для перехода на следующий уровень
 STAGE_TRANSITIONS = {
     'introduction': {'next_stage': 'active_recall', 'interactions_needed': 1},
     'active_recall': {'next_stage': 'consolidation', 'interactions_needed': 3},
     'consolidation': {'next_stage': 'spaced_repetition', 'interactions_needed': 5},
     'spaced_repetition': {'next_stage': 'active_usage', 'interactions_needed': 7},
-    'active_usage': {'next_stage': None, 'interactions_needed': None}
+    'active_usage': {'next_stage': None, 'interactions_needed': 10},
 }
 
 class UsersCreateView(generics.ListCreateAPIView):
@@ -32,6 +36,7 @@ class UsersListView(generics.ListAPIView):
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Users.objects.all()
     serializer_class = UserDetailsSerializer
+    permission_classes = [IsAuthenticated]
 
     def put(self, request, *args, **kwargs):
         user = self.get_object()
@@ -43,6 +48,13 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserMeView(generics.RetrieveAPIView):
+    serializer_class = UserDetailsSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
 
 class WordsCreateView(generics.ListCreateAPIView):
     serializer_class = WordSerializer
@@ -69,12 +81,14 @@ class WordDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class WordsListView(generics.ListAPIView):
     serializer_class = WordSerializer
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         level = self.request.query_params.get('level', None)
-        if level:
-            return Words.objects.filter(word_level=level)
-        return Words.objects.all()
+        queryset = Words.objects.all()
+        if level and level != 'all':
+            queryset = queryset.filter(word_level=level)
+        return queryset
 
 class AdminListCreateView(generics.ListCreateAPIView):
     queryset = Admins.objects.all()
@@ -116,11 +130,9 @@ class UserStageWordsView(generics.ListAPIView):
         level = self.request.query_params.get('level', None)
 
         if stage == 'introduction':
-            # Fetch words not in UserWordProgress for this user
             used_word_ids = UserWordProgress.objects.filter(user=user).values_list('word_id', flat=True)
             queryset = Words.objects.exclude(id_word__in=used_word_ids)
         else:
-            # Fetch words from UserWordProgress for the given stage
             queryset = Words.objects.filter(
                 userwordprogress__user=user,
                 userwordprogress__stage=stage
@@ -129,11 +141,10 @@ class UserStageWordsView(generics.ListAPIView):
         if level and level != 'all':
             queryset = queryset.filter(word_level=level)
 
-        # If fewer than 5 words, loop the queryset
         words = list(queryset)
-        if len(words) < 5 and len(words) > 0:
-            words = words * (5 // len(words) + 1)
-        return words[:5]
+        if len(words) < 4 and len(words) > 0:
+            words = words * (4 // len(words) + 1)
+        return words[:4]
 
 class UpdateWordProgressView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -144,8 +155,8 @@ class UpdateWordProgressView(generics.GenericAPIView):
         word_id = request.data.get('word_id')
         is_correct = request.data.get('is_correct', False)
 
-        if not word_id or not is_correct:
-            return Response({'error': 'word_id and is_correct are required'}, status=status.HTTP_400_BAD_REQUEST)
+        if not word_id:
+            return Response({'error': 'word_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             word = Words.objects.get(id_word=word_id)
@@ -155,10 +166,10 @@ class UpdateWordProgressView(generics.GenericAPIView):
         progress, created = UserWordProgress.objects.get_or_create(
             user=user,
             word=word,
-            defaults={'stage': 'introduction', 'interaction_count': 1}  # Начинаем с introduction
+            defaults={'stage': 'introduction', 'interaction_count': 0}
         )
 
-        if not created and is_correct:
+        if is_correct:
             progress.interaction_count += 1
             current_stage = progress.stage
             transition_info = STAGE_TRANSITIONS.get(current_stage)
@@ -167,9 +178,26 @@ class UpdateWordProgressView(generics.GenericAPIView):
                 progress.interaction_count >= transition_info['interactions_needed']
             ):
                 progress.stage = transition_info['next_stage']
+                progress.interaction_count = 0
             progress.save()
 
-        return Response({'status': 'success', 'stage': progress.stage, 'interaction_count': progress.interaction_count})
+            # Обновление активности пользователя
+            today = date.today()
+            activity, activity_created = UserActivity.objects.get_or_create(
+                user=user,
+                date=today,
+                defaults={'word_count': 0}
+            )
+            activity.word_count += 1
+            if activity.word_count >= ACTIVITY_WORD_THRESHOLD:
+                activity.save()
+
+        return Response({
+            'status': 'success',
+            'stage': progress.stage,
+            'interaction_count': progress.interaction_count,
+            'interactions_needed': STAGE_TRANSITIONS[progress.stage]['interactions_needed']
+        })
 
 class StageCountsView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -186,3 +214,65 @@ class StageCountsView(generics.GenericAPIView):
             'active_usage': UserWordProgress.objects.filter(user=user, stage='active_usage').count(),
         }
         return Response(stage_counts)
+
+class UserActivityView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = self.request.user
+        year = int(request.query_params.get('year', timezone.now().year))
+        
+        activities = UserActivity.objects.filter(
+            user=user,
+            date__year=year
+        ).values('date', 'word_count')
+
+        max_words = UserActivity.objects.filter(user=user).aggregate(
+            max_words=models.Max('word_count')
+        )['max_words'] or 1
+
+        return Response({
+            'activities': list(activities),
+            'max_words': max_words
+        })
+
+class UserActivityUpdateView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = self.request.user
+        today = timezone.now().date()
+        count = request.data.get('count', 0)
+
+        # Валидация входных данных
+        try:
+            count = int(count)
+            if count < 0:
+                return Response({
+                    'error': 'Count must be a non-negative integer'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except (ValueError, TypeError):
+            return Response({
+                'error': 'Count must be a valid integer'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            activity, created = UserActivity.objects.get_or_create(
+                user=user,
+                date=today,
+                defaults={'word_count': 0}
+            )
+
+            # Обновляем word_count, добавляя переданное количество слов
+            activity.word_count = F('word_count') + count
+            activity.save()
+
+            activity.refresh_from_db()
+            return Response({
+                'date': activity.date,
+                'word_count': activity.word_count
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
