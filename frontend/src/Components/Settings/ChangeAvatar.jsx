@@ -3,13 +3,26 @@ import styles from "../../styles/settings.module.css";
 
 const ChangeAvatar = () => {
   const [preview, setPreview] = useState(null);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (!file.type.startsWith("image/")) {
+        setError("Пожалуйста, выберите изображение");
+        setPreview(null);
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError("Файл слишком большой (максимум 5 МБ)");
+        setPreview(null);
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
+        setError(null);
       };
       reader.readAsDataURL(file);
     }
@@ -17,13 +30,18 @@ const ChangeAvatar = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!preview) {
+      setError("Пожалуйста, выберите изображение");
+      return;
+    }
     // Будет реализовано позже
-    alert("Функционал смены аватарки будет добавлен позже!");
+    setSuccess("Функционал смены аватарки будет добавлен позже!");
   };
 
   return (
     <div>
       <h2 className={styles.sectionTitle}>Смена аватарки</h2>
+      {success && <div className={styles.successMessage}>{success}</div>}
       <div className={styles.avatarContainer}>
         <div className={styles.avatarPreview}>
           {preview ? (
@@ -44,6 +62,7 @@ const ChangeAvatar = () => {
             <label htmlFor="avatar" className={styles.fileLabel}>
               Выбрать файл
             </label>
+            {error && <div className={styles.errorMessage}>{error}</div>}
           </div>
           <button type="submit" className={styles.submitButton}>
             Загрузить аватарку

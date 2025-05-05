@@ -94,3 +94,17 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(data['old_password']):
             raise serializers.ValidationError({"old_password": "Неверный текущий пароль"})
         return data
+    
+class ChangeUsernameSerializer(serializers.Serializer):
+    new_username = serializers.CharField(max_length=150)
+
+    def validate_new_username(self, value):
+        if not value:
+            raise serializers.ValidationError("Имя пользователя обязательно.")
+        if len(value) < 3:
+            raise serializers.ValidationError("Имя пользователя должно содержать не менее 3 символов.")
+        if not value.isalnum():
+            raise serializers.ValidationError("Имя пользователя должно содержать только буквы и цифры.")
+        if Users.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Это имя пользователя уже занято.")
+        return value

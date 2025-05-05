@@ -27,11 +27,6 @@ const Profile = () => {
   const isAuthenticated = !!localStorage.getItem("accessToken");
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setError("Пожалуйста, войдите в систему");
-      return;
-    }
-
     const fetchUserData = async () => {
       try {
         const [userResponse, activityResponse, stageResponse, levelResponse] = await Promise.all([
@@ -63,8 +58,12 @@ const Profile = () => {
     fetchUserData();
   }, [isAuthenticated, selectedYear]);
 
-  if (error) {
-    return <div className={`${styles.profileContainer} ${styles.errorMessage}`}>{error}</div>;
+  if (!isAuthenticated) {
+    return (
+      <div className={`${styles.settingsContainer} ${styles.errorMessage}`}>
+        Пожалуйста, войдите в систему
+      </div>
+    );
   }
 
   return (

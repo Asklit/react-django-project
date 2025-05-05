@@ -115,7 +115,7 @@ const WordProgressChart = ({ levelProgress }) => {
   }, [levelProgress]);
 
   return (
-    <div className={styles.chartContainer}>
+    <div className={styles.chartTableContainer}>
       <h2 className={styles.chartTitle}>Прогресс изучения слов по уровням</h2>
       <div className={styles.chartWrapper}>
         <canvas ref={chartRef} />

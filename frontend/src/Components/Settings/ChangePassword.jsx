@@ -2,22 +2,25 @@ import React, { useState } from "react";
 import axios from "axios";
 import styles from "../../styles/settings.module.css";
 
-const ChangePassword = ({ setError, setSuccess }) => {
+const ChangePassword = () => {
   const [formData, setFormData] = useState({
     old_password: "",
     new_password: "",
     confirm_password: "",
   });
+  const [errors, setErrors] = useState({});
+  const [success, setSuccess] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setErrors({ ...errors, [e.target.name]: null });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
+    setErrors({});
     setSuccess(null);
 
     try {
@@ -31,7 +34,15 @@ const ChangePassword = ({ setError, setSuccess }) => {
       setSuccess(response.data.status);
       setFormData({ old_password: "", new_password: "", confirm_password: "" });
     } catch (error) {
-      setError(error.response?.data?.errors?.non_field_errors?.[0] || "Ошибка при смене пароля");
+      const errorData = error.response?.data?.errors || {};
+      setErrors({
+        old_password: errorData.old_password?.[0],
+        new_password: errorData.new_password?.[0],
+        confirm_password: errorData.confirm_password?.[0] || errorData.non_field_errors?.[0],
+        general: !errorData.old_password && !errorData.new_password && !errorData.confirm_password
+          ? "Ошибка при смене пароля"
+          : null,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -40,6 +51,8 @@ const ChangePassword = ({ setError, setSuccess }) => {
   return (
     <div>
       <h2 className={styles.sectionTitle}>Смена пароля</h2>
+      {success && <div className={styles.successMessage}>{success}</div>}
+      {errors.general && <div className={styles.errorMessage}>{errors.general}</div>}
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.formGroup}>
           <label htmlFor="old_password">Текущий пароль</label>
@@ -52,6 +65,7 @@ const ChangePassword = ({ setError, setSuccess }) => {
             required
             className={styles.input}
           />
+          {errors.old_password && <div className={styles.errorMessage}>{errors.old_password}</div>}
         </div>
         <div className={styles.formGroup}>
           <label htmlFor="new_password">Новый пароль</label>
@@ -64,6 +78,7 @@ const ChangePassword = ({ setError, setSuccess }) => {
             required
             className={styles.input}
           />
+          {errors.new_password && <div className={styles.errorMessage}>{errors.new_password}</div>}
         </div>
         <div className={styles.formGroup}>
           <label htmlFor="confirm_password">Подтверждение пароля</label>
@@ -76,6 +91,9 @@ const ChangePassword = ({ setError, setSuccess }) => {
             required
             className={styles.input}
           />
+          {errors.confirm_password && (
+            <div className={styles.errorMessage}>{errors.confirm_password}</div>
+          )}
         </div>
         <button type="submit" className={styles.submitButton} disabled={isLoading}>
           {isLoading ? "Сохранение..." : "Изменить пароль"}

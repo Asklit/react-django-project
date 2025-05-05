@@ -503,9 +503,7 @@ const Main = () => {
         </div>
       </div>
       <div className={styles.wordsList}>
-        {currentWords.length === 0 ? (
-          <p>Нет доступных слов</p>
-        ) : (
+        {(
           currentWords.map((wordData, index) => (
             <Words
               key={`${wordData.id_word}-${index}`}

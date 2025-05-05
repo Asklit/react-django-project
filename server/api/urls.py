@@ -7,7 +7,7 @@ from .views import (
     UserActivityView, UserMeView, UserActivityUpdateView,
     UserLevelProgressView
 )
-from authapp.views import RegisterView, LoginView, ChangePasswordView
+from authapp.views import RegisterView, LoginView, ChangePasswordView, ChangeUsernameView
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
@@ -15,7 +15,8 @@ urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
-    
+    path('auth/change-username/', ChangeUsernameView.as_view(), name='change-username'),
+
     path('users/', UsersCreateView.as_view(), name='users-create'),
     path('users/list/', UsersListView.as_view(), name='users-list'),
     path('users/me/', UserMeView.as_view(), name='user-me'),
