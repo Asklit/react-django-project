@@ -35,6 +35,7 @@
   border-radius: 8px;
   border: 1px solid var(--border);
   text-align: left;
+  margin-bottom: var(--spacing-lg);
 }
 
 .activityHeader {
@@ -49,12 +50,9 @@
   color: var(--text);
 }
 
-.yearSelector {
-  margin-bottom: var(--spacing-md);
-}
-
 .yearSelector select {
   padding: var(--spacing-xs);
+  margin: var(--spacing-xs);
   font-size: var(--font-size-base);
   background-color: var(--background);
   color: var(--text);
@@ -119,7 +117,6 @@
   white-space: pre;
   font-size: var(--font-size-sm);
   z-index: 10;
-  transition: none;
 }
 
 .empty {
@@ -148,4 +145,127 @@
   width: 12px;
   height: 12px;
   border-radius: 2px;
+}
+
+.widgetsContainer {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.chartContainer {
+  background-color: var(--surface);
+  padding: var(--spacing-md);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  flex: 1;
+  min-width: 300px;
+  max-width: 700px;
+  height: 300px;
+  box-sizing: border-box;
+  text-align: left;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.fullWidthChartContainer {
+  background-color: var(--surface);
+  padding: var(--spacing-md);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-top: var(--spacing-lg);
+  width: 100%;
+  height: 400px; /* Increased height for full-width chart */
+  box-sizing: border-box;
+  text-align: left;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chartContainer:hover,
+.fullWidthChartContainer:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.chartTitle {
+  font-size: var(--font-size-lg);
+  color: var(--text);
+  margin-bottom: var(--spacing-md);
+}
+
+.chartWrapper {
+  position: relative;
+  height: 240px; /* Adjusted for title space */
+  width: 100%;
+}
+
+.fullWidthChartContainer .chartWrapper {
+  height: 320px; /* Increased for larger chart */
+}
+
+.totalWordsWidget {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: var(--spacing-md);
+  flex: 1;
+  min-width: 300px;
+  max-width: 400px;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.widgetContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.wordsRatio {
+  font-size: var(--font-size-xxl);
+  font-weight: bold;
+  color: var(--text);
+  margin-bottom: var(--spacing-sm);
+}
+
+.wordsLabel {
+  font-size: var(--font-size-base);
+  color: var(--text-muted);
+}
+
+.errorMessage {
+  color: var(--error);
+  font-size: var(--font-size-base);
+  margin: var(--spacing-lg) 0;
+}
+
+@media (max-width: 768px) {
+  .widgetsContainer {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .chartContainer,
+  .totalWordsWidget {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .chartWrapper {
+    height: 200px;
+  }
+
+  .fullWidthChartContainer {
+    height: 350px;
+  }
+
+  .fullWidthChartContainer .chartWrapper {
+    height: 280px;
+  }
 }

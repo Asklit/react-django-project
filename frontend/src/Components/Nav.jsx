@@ -116,16 +116,29 @@ const Nav = () => {
                   </button>
                   {dropdownOpen && (
                     <ul className={styles.dropdownMenu}>
+                      <li className={styles.dropdownSection}>
+                        <span className={styles.sectionLabel}>Аккаунт</span>
+                      </li>
                       <li>
                         <Link to="/profile" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
                           Профиль
                         </Link>
                       </li>
                       <li>
+                        <Link to="/settings" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
+                          Настройки
+                        </Link>
+                      </li>
+                      <li className={styles.dropdownDivider}></li>
+                      <li className={styles.dropdownSection}>
+                        <span className={styles.sectionLabel}>Администрирование</span>
+                      </li>
+                      <li>
                         <Link to="/admin" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
                           Панель администратора
                         </Link>
                       </li>
+                      <li className={styles.dropdownDivider}></li>
                       <li>
                         <button
                           onClick={handleLogout}

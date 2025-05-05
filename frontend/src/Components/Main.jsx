@@ -60,169 +60,114 @@ const Main = () => {
         return;
       }
 
-      const levelDistribution = words.reduce((acc, word) => {
-        acc[word.word_level] = (acc[word.word_level] || 0) + 1;
-        return acc;
-      }, {});
-      console.log("Words level distribution:", levelDistribution);
-
       let pool = [];
 
-      const userLevelIndex = userLevel && levelOrder.includes(userLevel)
-        ? levelOrder.indexOf(userLevel)
-        : levelOrder.indexOf("B1");
-      const lowerLevels = levelOrder.slice(0, userLevelIndex);
-      const higherLevels = levelOrder.slice(userLevelIndex + 1);
-      const currentLevel = levelOrder[userLevelIndex];
+      // Если слов меньше или равно POOL_SIZE, используем их все
+      if (words.length <= POOL_SIZE) {
+        pool = [...words];
+      } else {
+        // Логика выбора слов по уровню и стадии
+        const userLevelIndex = userLevel && levelOrder.includes(userLevel)
+          ? levelOrder.indexOf(userLevel)
+          : levelOrder.indexOf("B1");
+        const lowerLevels = levelOrder.slice(0, userLevelIndex);
+        const higherLevels = levelOrder.slice(userLevelIndex + 1);
+        const currentLevel = levelOrder[userLevelIndex];
 
-      console.log("lowerLevels =", lowerLevels);
-      console.log("higherLevels =", higherLevels);
-      console.log("currentLevel =", currentLevel);
+        console.log("lowerLevels =", lowerLevels);
+        console.log("higherLevels =", higherLevels);
+        console.log("currentLevel =", currentLevel);
 
-      if (selectedStage !== "all") {
-        let stagedWords = words.filter((word) => word.stage === selectedStage);
-        console.log("stagedWords count =", stagedWords.length);
+        if (selectedStage !== "all") {
+          const stagedWords = words.filter((word) => word.stage === selectedStage);
+          console.log("stagedWords count =", stagedWords.length);
 
-        const lowerLevelWords = stagedWords.filter((word) =>
-          lowerLevels.includes(word.word_level)
-        );
-        const currentLevelWords = stagedWords.filter((word) =>
-          word.word_level === currentLevel
-        );
-        const higherLevelWords = stagedWords.filter((word) =>
-          higherLevels.includes(word.word_level)
-        );
-
-        console.log("lowerLevelWords count =", lowerLevelWords.length);
-        console.log("currentLevelWords count =", currentLevelWords.length);
-        console.log("higherLevelWords count =", higherLevelWords.length);
-
-        // Формируем пул аналогично "все стадии": 5 слов ниже, 10 на текущем, 5 выше
-        const selectedLowerWords = getRandomWords(lowerLevelWords, 5);
-        const selectedCurrentWords = getRandomWords(currentLevelWords, 10);
-        const selectedHigherWords = getRandomWords(higherLevelWords, 5);
-
-        pool = [...selectedLowerWords, ...selectedCurrentWords, ...selectedHigherWords];
-
-        console.log("Initial pool count =", pool.length);
-
-        // Если пул меньше POOL_SIZE, добавляем повторения
-        if (pool.length < POOL_SIZE) {
-          if (stagedWords.length > 0) {
-            const repeatCount = Math.ceil((POOL_SIZE - pool.length) / stagedWords.length);
-            const repeatedWords = Array(repeatCount)
-              .fill(stagedWords)
-              .flat()
-              .slice(0, POOL_SIZE - pool.length);
-            pool = [...pool, ...repeatedWords];
-          } else {
-            // Если нет слов в выбранной стадии, используем слова из wordsList
-            const fallbackLowerWords = words.filter((word) =>
+          if (stagedWords.length === 0) {
+            const lowerLevelWords = words.filter((word) =>
               lowerLevels.includes(word.word_level)
             );
-            const fallbackCurrentWords = words.filter((word) =>
+            const currentLevelWords = words.filter((word) =>
               word.word_level === currentLevel
             );
-            const fallbackHigherWords = words.filter((word) =>
+            const higherLevelWords = words.filter((word) =>
               higherLevels.includes(word.word_level)
             );
 
-            const additionalLower = getRandomWords(
-              fallbackLowerWords,
-              Math.ceil((POOL_SIZE - pool.length) / 3)
+            pool = [
+              ...getRandomWords(lowerLevelWords, 5),
+              ...getRandomWords(currentLevelWords, 10),
+              ...getRandomWords(higherLevelWords, 5),
+            ];
+          } else {
+            const lowerLevelWords = stagedWords.filter((word) =>
+              lowerLevels.includes(word.word_level)
             );
-            const additionalCurrent = getRandomWords(
-              fallbackCurrentWords,
-              Math.ceil((POOL_SIZE - pool.length) / 3)
+            const currentLevelWords = stagedWords.filter((word) =>
+              word.word_level === currentLevel
             );
-            const additionalHigher = getRandomWords(
-              fallbackHigherWords,
-              Math.ceil((POOL_SIZE - pool.length) / 3)
+            const higherLevelWords = stagedWords.filter((word) =>
+              higherLevels.includes(word.word_level)
             );
 
-            pool = [...pool, ...additionalLower, ...additionalCurrent, ...additionalHigher];
-          }
-        }
-
-        // Гарантируем минимум 4 слова
-        if (pool.length < MAX_CARDS && pool.length > 0) {
-          const repeatCount = Math.ceil(MAX_CARDS / pool.length);
-          pool = Array(repeatCount)
-            .fill(pool)
-            .flat()
-            .slice(0, POOL_SIZE);
-        }
-      } else {
-        const hasWordsInStages =
-          isAuthenticated &&
-          Object.values(stageCounts).some((count) => count > 0);
-
-        if (!hasWordsInStages) {
-          const lowerLevelWords = words.filter((word) =>
-            lowerLevels.includes(word.word_level)
-          );
-          const currentLevelWords = words.filter((word) =>
-            word.word_level === currentLevel
-          );
-          const higherLevelWords = words.filter((word) =>
-            higherLevels.includes(word.word_level)
-          );
-
-          console.log("lowerLevelWords count =", lowerLevelWords.length);
-          console.log("currentLevelWords count =", currentLevelWords.length);
-          console.log("higherLevelWords count =", higherLevelWords.length);
-
-          const selectedLowerWords = getRandomWords(lowerLevelWords, 5);
-          const selectedCurrentWords = getRandomWords(currentLevelWords, 10);
-          const selectedHigherWords = getRandomWords(higherLevelWords, 5);
-
-          pool = [...selectedLowerWords, ...selectedCurrentWords, ...selectedHigherWords];
-
-          if (pool.length < POOL_SIZE) {
-            const remainingWords = words.filter(
-              (w) => !pool.some((pw) => pw.id_word === w.id_word)
-            );
-            const additionalWords = getRandomWords(
-              remainingWords,
-              POOL_SIZE - pool.length
-            );
-            pool = [...pool, ...additionalWords];
+            pool = [
+              ...getRandomWords(lowerLevelWords, 5),
+              ...getRandomWords(currentLevelWords, 10),
+              ...getRandomWords(higherLevelWords, 5),
+            ];
           }
         } else {
-          const stagedWords = words.filter(
-            (word) => word.stage && word.stage !== "none"
-          );
-          const newWords = words.filter(
-            (word) => !word.stage || word.stage === "none"
-          );
+          const hasWordsInStages =
+            isAuthenticated &&
+            Object.values(stageCounts).some((count) => count > 0);
 
-          console.log("stagedWords count =", stagedWords.length);
-          console.log("newWords count =", newWords.length);
-
-          const selectedStagedWords = getRandomWords(stagedWords, 15);
-          const selectedNewWords = getRandomWords(newWords, 5);
-
-          pool = [...selectedStagedWords, ...selectedNewWords];
-          if (pool.length < POOL_SIZE) {
-            const remainingWords = words.filter(
-              (w) => !pool.some((pw) => pw.id_word === w.id_word)
+          if (!hasWordsInStages) {
+            const lowerLevelWords = words.filter((word) =>
+              lowerLevels.includes(word.word_level)
             );
-            const additionalWords = getRandomWords(
-              remainingWords,
-              POOL_SIZE - pool.length
+            const currentLevelWords = words.filter((word) =>
+              word.word_level === currentLevel
             );
-            pool = [...pool, ...additionalWords];
+            const higherLevelWords = words.filter((word) =>
+              higherLevels.includes(word.word_level)
+            );
+
+            pool = [
+              ...getRandomWords(lowerLevelWords, 5),
+              ...getRandomWords(currentLevelWords, 10),
+              ...getRandomWords(higherLevelWords, 5),
+            ];
+          } else {
+            const stagedWords = words.filter(
+              (word) => word.stage && word.stage !== "none"
+            );
+            const newWords = words.filter(
+              (word) => !word.stage || word.stage === "none"
+            );
+
+            pool = [
+              ...getRandomWords(stagedWords, 15),
+              ...getRandomWords(newWords, 5),
+            ];
           }
+        }
+
+        // Удаление дубликатов по id_word
+        pool = Array.from(
+          new Map(pool.map((word) => [word.id_word, word])).values()
+        );
+
+        // Заполнение пула до POOL_SIZE уникальными словами, если возможно
+        if (pool.length < POOL_SIZE) {
+          const remainingWords = words.filter(
+            (w) => !pool.some((pw) => pw.id_word === w.id_word)
+          );
+          pool = [...pool, ...getRandomWords(remainingWords, POOL_SIZE - pool.length)];
         }
       }
 
       console.log("Final pool count =", pool.length);
-      console.log(
-        "Pool levels:",
-        pool.map((w) => w.word_level)
-      );
+      console.log("Pool levels:", pool.map((w) => w.word_level));
 
-      pool = getRandomWords(pool, POOL_SIZE);
       setWordsPool(pool);
       setCurrentWords(getRandomWords(pool, Math.min(MAX_CARDS, pool.length)));
     },
@@ -297,7 +242,7 @@ const Main = () => {
       }
     };
     fetchWordsAndCounts();
-  }, [selectedLevel, selectedStage, isAuthenticated, initializeWordsPool]);
+  }, [selectedLevel, selectedStage, isAuthenticated]);
 
   const updateWpm = () => {
     if (!startTime) {
@@ -389,37 +334,30 @@ const Main = () => {
 
       setWordsPool((prevPool) => {
         let updatedPool = [...prevPool];
+
+        // Удаляем слово, если его стадия изменилась и не соответствует выбранной
         if (
           newStage &&
           newStage !== completedWord.stage &&
-          updatedPool.indexOf(completedWord) >= MAX_CARDS
+          selectedStage !== "all"
         ) {
           updatedPool = updatedPool.filter((w) => w.id_word !== wordId);
-        } else {
-          const randomSlot = Math.floor(Math.random() * 10) + 10;
-          if (updatedPool.length > randomSlot) {
-            updatedPool[randomSlot] = completedWord;
-          } else {
-            updatedPool.push(completedWord);
-          }
         }
 
-        if (updatedPool.length < POOL_SIZE) {
+        // Если пул слишком мал, повторно добавляем завершённое слово
+        if (updatedPool.length < POOL_SIZE && wordsList.length <= POOL_SIZE) {
+          updatedPool.push(completedWord);
+        } else if (updatedPool.length < POOL_SIZE) {
           const remainingWords = wordsList.filter(
             (w) =>
               !updatedPool.some((pw) => pw.id_word === w.id_word) &&
-              (!newStage || w.stage === selectedStage)
+              !newWords.some((nw) => nw.id_word === w.id_word)
           );
           if (remainingWords.length > 0) {
             const newWord = getRandomWords(remainingWords, 1)[0];
             updatedPool.push(newWord);
-          } else if (updatedPool.length > 0) {
-            const repeatCount = Math.ceil((POOL_SIZE - updatedPool.length) / updatedPool.length);
-            const repeatedWords = Array(repeatCount)
-              .fill(updatedPool)
-              .flat()
-              .slice(0, POOL_SIZE - updatedPool.length);
-            updatedPool = [...updatedPool, ...repeatedWords];
+          } else {
+            updatedPool.push(completedWord);
           }
         }
 
@@ -436,6 +374,8 @@ const Main = () => {
           if (newWord) {
             updatedCurrentWords.push(newWord);
           }
+        } else if (wordsPool.length > 0) {
+          updatedCurrentWords.push(completedWord);
         }
       }
 
@@ -451,33 +391,23 @@ const Main = () => {
 
       setWordsPool((prevPool) => {
         let updatedPool = [...prevPool];
-        const remainingWords = wordsList.filter(
-          (w) =>
-            !updatedPool.some((pw) => pw.id_word === w.id_word) &&
-            !newWords.some((nw) => nw.id_word === w.id_word)
-        );
-
-        if (updatedPool.length < POOL_SIZE && remainingWords.length > 0) {
-          const newWord = getRandomWords(remainingWords, 1)[0];
-          updatedPool.push(newWord);
-        } else if (updatedPool.length < POOL_SIZE && updatedPool.length > 0) {
-          const repeatCount = Math.ceil((POOL_SIZE - updatedPool.length) / updatedPool.length);
-          const repeatedWords = Array(repeatCount)
-            .fill(updatedPool)
-            .flat()
-            .slice(0, POOL_SIZE - updatedPool.length);
-          updatedPool = [...updatedPool, ...repeatedWords];
-        }
-
-        const randomSlot = Math.floor(Math.random() * 10) + 10;
-        if (updatedPool.length > randomSlot) {
-          updatedPool[randomSlot] = completedWord;
-        } else {
+        if (updatedPool.length < POOL_SIZE && wordsList.length <= POOL_SIZE) {
           updatedPool.push(completedWord);
+        } else if (updatedPool.length < POOL_SIZE) {
+          const remainingWords = wordsList.filter(
+            (w) =>
+              !updatedPool.some((pw) => pw.id_word === w.id_word) &&
+              !newWords.some((nw) => nw.id_word === w.id_word)
+          );
+          if (remainingWords.length > 0) {
+            const newWord = getRandomWords(remainingWords, 1)[0];
+            updatedPool.push(newWord);
+          } else {
+            updatedPool.push(completedWord);
+          }
         }
 
-        updatedPool = updatedPool.slice(0, POOL_SIZE);
-        return updatedPool;
+        return updatedPool.slice(0, POOL_SIZE);
       });
 
       let updatedCurrentWords = [...newWords];
@@ -490,6 +420,8 @@ const Main = () => {
           if (newWord) {
             updatedCurrentWords.push(newWord);
           }
+        } else if (wordsPool.length > 0) {
+          updatedCurrentWords.push(completedWord);
         }
       }
 
@@ -572,11 +504,11 @@ const Main = () => {
       </div>
       <div className={styles.wordsList}>
         {currentWords.length === 0 ? (
-          <p></p>
+          <p>Нет доступных слов</p>
         ) : (
           currentWords.map((wordData, index) => (
             <Words
-              key={wordData.id_word}
+              key={`${wordData.id_word}-${index}`}
               word={wordData.word}
               translate={wordData.translate_word}
               partOfSpeech={wordData.part_of_speech}

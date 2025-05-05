@@ -7,6 +7,7 @@ import AdminPanel from "./Components/Admin/AdminPanel";
 import Register from "./Components/Authorization/Register";
 import Login from "./Components/Authorization/Login";
 import Profile from "./Components/Profile";
+import Settings from "./Components/Settings";
 
 import styles from "./styles/main.module.css";
 import "./styles/global.css";
@@ -23,6 +24,7 @@ function App() {
             <Route path="/register" element={<div className={styles.auth_page}><Register /></div>} />
             <Route path="/login" element={<div className={styles.auth_page}><Login /></div>} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
         {/* <Footer /> */}

@@ -18,6 +18,7 @@ STAGE_TRANSITIONS = {
     'active_usage': {'next_stage': None, 'interactions_needed': 10},
 }
 
+# Existing views (unchanged)
 class UsersCreateView(generics.ListCreateAPIView):
     serializer_class = UserSerializer
     queryset = Users.objects.all()
@@ -141,10 +142,18 @@ class UserStageWordsView(generics.ListAPIView):
         if level and level != 'all':
             queryset = queryset.filter(word_level=level)
 
-        words = list(queryset)
-        if len(words) < 4 and len(words) > 0:
-            words = words * (4 // len(words) + 1)
-        return words[:4]
+        # Ensure at least 4 unique words without duplication
+        words = list(queryset.distinct())[:4]
+        if len(words) < 4:
+            # Fetch additional words from other stages or levels
+            exclude_ids = [w.id_word for w in words]
+            additional_queryset = Words.objects.exclude(id_word__in=exclude_ids)
+            if level and level != 'all':
+                additional_queryset = additional_queryset.filter(word_level=level)
+            additional_words = list(additional_queryset.distinct())[:4 - len(words)]
+            words.extend(additional_words)
+
+        return words
 
 class UpdateWordProgressView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -181,7 +190,6 @@ class UpdateWordProgressView(generics.GenericAPIView):
                 progress.interaction_count = 0
             progress.save()
 
-            # Обновление активности пользователя
             today = date.today()
             activity, activity_created = UserActivity.objects.get_or_create(
                 user=user,
@@ -244,7 +252,6 @@ class UserActivityUpdateView(generics.GenericAPIView):
         today = timezone.now().date()
         count = request.data.get('count', 0)
 
-        # Валидация входных данных
         try:
             count = int(count)
             if count < 0:
@@ -263,7 +270,6 @@ class UserActivityUpdateView(generics.GenericAPIView):
                 defaults={'word_count': 0}
             )
 
-            # Обновляем word_count, добавляя переданное количество слов
             activity.word_count = F('word_count') + count
             activity.save()
 
@@ -276,3 +282,29 @@ class UserActivityUpdateView(generics.GenericAPIView):
             return Response({
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UserLevelProgressView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = self.request.user
+        levels = ['A1', 'A2', 'B1', 'B2', 'C1']
+        
+        studied_words = {
+            level: UserWordProgress.objects.filter(
+                user=user,
+                stage__in=['active_recall', 'consolidation', 'spaced_repetition', 'active_usage'],
+                word__word_level=level
+            ).count()
+            for level in levels
+        }
+        
+        total_words = {
+            level: Words.objects.filter(word_level=level).count()
+            for level in levels
+        }
+
+        return Response({
+            'studied_words': studied_words,
+            'total_words': total_words
+        })
