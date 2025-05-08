@@ -42,11 +42,11 @@ class Users(AbstractBaseUser, PermissionsMixin):
         max_length=2,
         error_messages={'max_length': 'Убедитесь, что это поле не содержит более 2 символов.'}
     )
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     is_email_verificated = models.BooleanField(default=False)
     account_created_at = models.DateTimeField(auto_now_add=True)
     password_changed_at = models.DateTimeField(auto_now=True)
     last_day_online = models.DateTimeField(auto_now_add=True)
-    days_in_berserk = models.IntegerField(default=0)
     
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

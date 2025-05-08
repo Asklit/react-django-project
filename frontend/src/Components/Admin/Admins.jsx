@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from "../../styles/AdminPanel.module.css";
-import axios from "axios";
+import api from "../../api"; 
 import DateDisplay from "./DateFormat";
 
 function Admins() {
@@ -27,7 +27,7 @@ function Admins() {
 
   const fetchAdminsData = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/api/list/admins/");
+      const response = await api.get("http://localhost:8000/api/admins/");
       setAdmins(response.data);
     } catch (error) {
       console.error("Error occurred:", error);
@@ -36,7 +36,7 @@ function Admins() {
 
   const fetchUsersData = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/api/list/users");
+      const response = await api.get("http://localhost:8000/api/users/list/");
       setUsers(response.data);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -51,10 +51,10 @@ function Admins() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      await axios.post("http://localhost:8000/api/list/admins/", newAdmin);
+      await api.post("http://localhost:8000/api/admins/", newAdmin);
       setNewAdmin({ id_admin: "", first_name: "", surname: "", established_post: "" });
       setFormErrors({});
-      fetchAdminsData(); // Обновляем список администраторов после добавления
+      fetchAdminsData();
     } catch (error) {
       const errors = error.response.data;
       console.error("There has been a problem with create admin operation:", errors);
@@ -66,9 +66,9 @@ function Admins() {
     try {
       const url = `http://localhost:8000/api/admins/${id_admin}/`;
       console.log(`Deleting admin at URL: ${url}`);
-      const response = await axios.delete(url);
+      const response = await api.delete(url);
       console.log("Admin deleted successfully:", response.data);
-      fetchAdminsData(); // Обновляем список после удаления
+      fetchAdminsData();
     } catch (error) {
       console.error("There has been a problem with the delete admin operation:", error.response ? error.response.data : error.message);
     }
@@ -85,7 +85,7 @@ function Admins() {
       const url = `http://localhost:8000/api/admins/${id_admin}/`;
       const updatedData = { [field]: value };
       console.log(`Updating admin at URL: ${url}`, updatedData);
-      const response = await axios.put(url, updatedData);
+      const response = await api.put(url, updatedData);
       console.log("Admin updated successfully:", response.data);
     } catch (error) {
       console.error("There has been a problem with the update admin operation:", error.response ? error.response.data : error.message);
@@ -120,7 +120,6 @@ function Admins() {
     return sortedAdmins;
   };
 
-  // Фильтруем пользователей, исключая тех, кто уже администратор
   const availableUsers = users.filter(
     (user) => !admins.some((admin) => admin.id_admin === user.id_user)
   );

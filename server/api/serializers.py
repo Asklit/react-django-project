@@ -85,3 +85,8 @@ class AdminCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Admins
         fields = ['id_admin', 'first_name', 'surname', 'established_post']
+
+class AdminUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Admins
+        fields = ['first_name', 'surname', 'established_post'] 

@@ -28,7 +28,6 @@ api.interceptors.response.use(
             refresh: refreshToken,
           });
           localStorage.setItem("accessToken", data.access);
-          // simplejwt не всегда возвращает новый refresh токен
           if (data.refresh) {
             localStorage.setItem("refreshToken", data.refresh);
           }

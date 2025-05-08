@@ -1,14 +1,15 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from core.models import Users, Admins, UserActivity
 from vocabulary.models import Words, UserWordProgress
-from .serializers import UserSerializer, UserDetailsSerializer, WordSerializer, AdminSerializer, AdminCreateSerializer
+from .serializers import UserSerializer, UserDetailsSerializer, WordSerializer, AdminSerializer, AdminCreateSerializer, AdminUpdateSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from datetime import date
 from config import ACTIVITY_WORD_THRESHOLD
 from django.db import models
 from django.db.models import F
 from django.utils import timezone
+from django.db.models import Count
 
 STAGE_TRANSITIONS = {
     'introduction': {'next_stage': 'active_recall', 'interactions_needed': 1},
@@ -18,7 +19,16 @@ STAGE_TRANSITIONS = {
     'active_usage': {'next_stage': None, 'interactions_needed': 10},
 }
 
-# Existing views (unchanged)
+
+class IsAdminOrSelf(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if Admins.objects.filter(id_admin=request.user).exists():
+            return True
+        return obj.id_admin == request.user
+
 class UsersCreateView(generics.ListCreateAPIView):
     serializer_class = UserSerializer
     queryset = Users.objects.all()
@@ -37,7 +47,7 @@ class UsersListView(generics.ListAPIView):
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Users.objects.all()
     serializer_class = UserDetailsSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrSelf]
 
     def put(self, request, *args, **kwargs):
         user = self.get_object()
@@ -111,11 +121,16 @@ class AdminDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Admins.objects.all()
     serializer_class = AdminSerializer
     lookup_field = 'id_admin'
+    permission_classes = [IsAdminOrSelf]
+
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return AdminUpdateSerializer
+        return AdminSerializer
 
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = AdminCreateSerializer(instance, data=request.data, partial=partial)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -142,10 +157,8 @@ class UserStageWordsView(generics.ListAPIView):
         if level and level != 'all':
             queryset = queryset.filter(word_level=level)
 
-        # Ensure at least 4 unique words without duplication
         words = list(queryset.distinct())[:4]
         if len(words) < 4:
-            # Fetch additional words from other stages or levels
             exclude_ids = [w.id_word for w in words]
             additional_queryset = Words.objects.exclude(id_word__in=exclude_ids)
             if level and level != 'all':
@@ -308,3 +321,24 @@ class UserLevelProgressView(generics.GenericAPIView):
             'studied_words': studied_words,
             'total_words': total_words
         })
+    
+class DailyUserActivityView(generics.GenericAPIView):
+    def get(self, request, *args, **kwargs):
+        days = 30
+        end_date = timezone.now().date()
+        start_date = end_date - timezone.timedelta(days=days)
+        activities = (
+            Users.objects.filter(last_day_online__date__range=[start_date, end_date])
+            .values("last_day_online__date")
+            .annotate(user_count=Count("id_user"))
+            .order_by("last_day_online__date")
+        )
+
+        result = []
+        current_date = start_date
+        activity_dict = {str(a["last_day_online__date"]): a["user_count"] for a in activities}
+        while current_date <= end_date:
+            date_str = str(current_date)
+            result.append({"date": date_str, "user_count": activity_dict.get(date_str, 0)})
+            current_date += timezone.timedelta(days=1)
+        return Response(result)

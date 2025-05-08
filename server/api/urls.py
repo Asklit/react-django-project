@@ -5,10 +5,13 @@ from .views import (
     AdminListCreateView, AdminDetailView,
     UserStageWordsView, UpdateWordProgressView, StageCountsView,
     UserActivityView, UserMeView, UserActivityUpdateView,
-    UserLevelProgressView
+    UserLevelProgressView,DailyUserActivityView,
 )
-from authapp.views import RegisterView, LoginView, ChangePasswordView, ChangeUsernameView
+from authapp.views import RegisterView, LoginView, ChangePasswordView, ChangeUsernameView, ChangeAvatarView, AdminMeView
 from rest_framework_simplejwt.views import TokenRefreshView
+
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('auth/register/', RegisterView.as_view(), name='register'),
@@ -16,7 +19,8 @@ urlpatterns = [
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('auth/change-username/', ChangeUsernameView.as_view(), name='change-username'),
-
+    path('auth/change-avatar/', ChangeAvatarView.as_view(), name='change-avatar'),
+    
     path('users/', UsersCreateView.as_view(), name='users-create'),
     path('users/list/', UsersListView.as_view(), name='users-list'),
     path('users/me/', UserMeView.as_view(), name='user-me'),
@@ -36,4 +40,7 @@ urlpatterns = [
     
     path('users/activity/', UserActivityView.as_view(), name='user-activity'),
     path('users/activity/update/', UserActivityUpdateView.as_view(), name='user-activity-update'),
-]
+    path('activity/users-daily/', DailyUserActivityView.as_view(), name='users-daily-activity'),
+
+    path('admins/me/', AdminMeView.as_view(), name='admin-me'),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

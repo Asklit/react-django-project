@@ -21,7 +21,7 @@ const WordProgressChart = ({ levelProgress }) => {
           labels: levels,
           datasets: [
             {
-              label: "Изученные слова",
+              label: "Изучаемые слова по уровням",
               data: levels.map((level) => levelProgress.studied_words[level] || 0),
               backgroundColor: "rgba(90, 101, 234, 0.6)",
               borderColor: "#5a65ea",
@@ -47,7 +47,7 @@ const WordProgressChart = ({ levelProgress }) => {
               type: "logarithmic",
               title: {
                 display: true,
-                text: "Количество изученных слов",
+                text: "Количество изучаемых слов",
                 color: "#dcdee3",
                 font: { size: 14, family: "'Roboto', sans-serif" },
               },
@@ -78,7 +78,7 @@ const WordProgressChart = ({ levelProgress }) => {
                   const studied = levelProgress.studied_words[level] || 0;
                   const total = levelProgress.total_words[level] || 1;
                   const percentage = total > 0 ? ((studied / total) * 100).toFixed(2) : 0;
-                  return `Изучено: ${studied} из ${total} (${percentage}%)`;
+                  return `${studied} из ${total} (${percentage}%)`;
                 },
               },
             },

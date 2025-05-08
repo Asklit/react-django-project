@@ -1,24 +1,77 @@
 import React, { useState, useEffect } from "react";
+import { TransitionGroup, CSSTransition } from "react-transition-group";
+import axios from "axios";
 import styles from "../../styles/AdminPanel.module.css";
 import Users from "./Users";
 import Words from "./Words";
 import Admins from "./Admins";
+import Dashboards from "./Dashboards";
 
 function AdminPanel() {
-  // Загружаем начальное значение из localStorage или используем "users" по умолчанию
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem("activeTab") || "users";
   });
+  const [isAdmin, setIsAdmin] = useState(null); // null - загрузка, true - админ, false - не админ
+  const [error, setError] = useState(null);
 
-  // Сохраняем activeTab в localStorage при каждом его изменении
   useEffect(() => {
     localStorage.setItem("activeTab", activeTab);
   }, [activeTab]);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        await axios.get("http://localhost:8000/api/admins/me/", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` },
+        });
+        setIsAdmin(true);
+        setError(null);
+      } catch (err) {
+        setIsAdmin(false);
+        setError("У вас нет прав администратора для доступа к этой странице");
+      }
+    };
+
+    checkAdminStatus();
+  }, []);
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "users":
+        return <Users />;
+      case "words":
+        return <Words />;
+      case "admins":
+        return <Admins />;
+      case "dashboards":
+        return <Dashboards />;
+      default:
+        return <Users />;
+    }
+  };
+
+  if (isAdmin === null) {
+    return <div className={`${styles.admin_container} ${styles.errorMessage}`}>Загрузка...</div>;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className={`${styles.admin_container} ${styles.errorMessage}`}>
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className={styles.admin_container}>
       <h2 className={styles.admin_title}>Панель администратора</h2>
       <div className={styles.admin_tabs}>
+        <button
+          className={`${styles.admin_tab} ${activeTab === "dashboards" ? styles.active : ""}`}
+          onClick={() => setActiveTab("dashboards")}
+        >
+          Дашборды
+        </button>
         <button
           className={`${styles.admin_tab} ${activeTab === "users" ? styles.active : ""}`}
           onClick={() => setActiveTab("users")}
@@ -39,9 +92,20 @@ function AdminPanel() {
         </button>
       </div>
 
-      {activeTab === "users" && <Users />}
-      {activeTab === "words" && <Words />}
-      {activeTab === "admins" && <Admins />}
+      <TransitionGroup>
+        <CSSTransition
+          key={activeTab}
+          timeout={300}
+          classNames={{
+            enter: styles.tabEnter,
+            enterActive: styles.tabEnterActive,
+            exit: styles.tabExit,
+            exitActive: styles.tabExitActive,
+          }}
+        >
+          <div className={styles.tabContent}>{renderTabContent()}</div>
+        </CSSTransition>
+      </TransitionGroup>
     </div>
   );
 }

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import styles from "../../styles/AdminPanel.module.css";
 import axios from "axios";
 import DateDisplay from "./DateFormat";
+import api from "../../api"
+
 
 function Users() {
   const [users, setUsers] = useState([]);
@@ -38,9 +40,8 @@ function Users() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    let response;
     try {
-      response = await axios.post(
+      const response = await axios.post(
         "http://localhost:8000/api/users/",
         newUser
       );
@@ -65,11 +66,17 @@ function Users() {
   const handleDelete = async (userId) => {
     try {
       const url = `http://localhost:8000/api/users/${userId}/`;
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        throw new Error("Токен авторизации не найден. Пожалуйста, войдите в систему.");
+      }
 
       console.log(`Deleting user at URL: ${url}`);
-
-      const response = await axios.delete(url);
-
+      const response = await axios.delete(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       console.log("User deleted successfully:", response.data);
     } catch (error) {
       console.error(
@@ -77,29 +84,29 @@ function Users() {
         error.response ? error.response.data : error.message
       );
     }
-
     fetchUsersData();
   };
 
   const handleChange = async (userId, field, value) => {
+    console.log(`Attempting to update user ${userId}, field: ${field}, value: ${value}`);
     setUsers((prevUsers) =>
       prevUsers.map((user) =>
         user.id_user === userId ? { ...user, [field]: value } : user
       )
     );
-
+  
     try {
       const url = `http://localhost:8000/api/users/${userId}/`;
       const updatedData = {
         [field]: value,
       };
-
-      console.log(`Updating user at URL: ${url}`, updatedData);
-      const response = await axios.put(url, updatedData);
+  
+      console.log(`Sending PUT request to ${url} with data:`, updatedData);
+      const response = await api.put(url, updatedData); // Используем api вместо axios
       console.log("User updated successfully:", response.data);
     } catch (error) {
       console.error(
-        "There has been a problem with the update user operation:",
+        "Error updating user:",
         error.response ? error.response.data : error.message
       );
     }
@@ -199,7 +206,6 @@ function Users() {
             <th>Дата создания аккаунта</th>
             <th>Дата изменения пароля</th>
             <th>Последний вход в аккаунт</th>
-            <th>Берсерк</th>
           </tr>
         </thead>
         <tbody>
@@ -455,38 +461,6 @@ function Users() {
                                 }`}
                 >
                   <DateDisplay dateString={user.last_day_online} />
-                </td>
-                <td
-                  onMouseEnter={() => handleMouseEnter(rowIndex, 8)}
-                  onMouseLeave={handleMouseLeave}
-                  className={`${styles.cell} 
-                                ${
-                                  hoveredCell.row === rowIndex
-                                    ? styles.hoveredRow
-                                    : ""
-                                } 
-                                ${
-                                  hoveredCell.col === 8 ? styles.hoveredCol : ""
-                                } 
-                                ${
-                                  hoveredCell.row === rowIndex &&
-                                  hoveredCell.col === 8
-                                    ? styles.hoveredCell
-                                    : ""
-                                }`}
-                >
-                  <input
-                    type="text"
-                    value={user.days_in_berserk}
-                    onChange={(e) =>
-                      handleChange(
-                        user.id_user,
-                        "days_in_berserk",
-                        e.target.value
-                      )
-                    }
-                    spellCheck="false"
-                  />
                 </td>
                 <td className={styles.border_none}>
                   <div

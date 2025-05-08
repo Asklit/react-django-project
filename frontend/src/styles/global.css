@@ -20,7 +20,7 @@ body,
   --text-muted: #54555e;
   --error: #ff4081;
   --warning: #df4f4b;
-  --level-color: #00c4b4; /* Новый яркий цвет для уровня (бирюзовый) */
+  --level-color: #00c4b4;
   --spacing-xs: 8px;
   --spacing-xss: 12px;
   --spacing-sm: 15px;

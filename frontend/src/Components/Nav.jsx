@@ -1,23 +1,27 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from '../api';
+import axios from "axios";
+import api from "../api";
 import styles from "../styles/nav.module.css";
 
 const Nav = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("accessToken"));
   const [username, setUsername] = useState(null); // null indicates loading
+  const [avatar, setAvatar] = useState(null); // URL аватара
+  const [isAdmin, setIsAdmin] = useState(false); // Статус администратора
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Функция для получения имени пользователя
-  const fetchUsername = useCallback(async () => {
+  // Функция для получения данных пользователя
+  const fetchUserData = useCallback(async () => {
     const accessToken = localStorage.getItem("accessToken");
     const userId = localStorage.getItem("userId");
 
-    // Проверяем наличие токена и userId
     if (!accessToken || !userId) {
-      setUsername("Loading");
+      setUsername("Гость");
+      setAvatar(null);
       setIsAuthenticated(false);
+      setIsAdmin(false);
       return;
     }
 
@@ -25,18 +29,21 @@ const Nav = () => {
       const response = await api.get(`/users/${userId}/`);
       if (response.data && response.data.username) {
         setUsername(response.data.username);
+        setAvatar(response.data.avatar || null);
         setIsAuthenticated(true);
       } else {
         setUsername("Гость");
+        setAvatar(null);
         setIsAuthenticated(false);
+        setIsAdmin(false);
       }
     } catch (err) {
-      console.error("Failed to fetch username:", err);
-      setUsername("Loading");
+      console.error("Failed to fetch user data:", err);
+      setUsername("Гость");
+      setAvatar(null);
       setIsAuthenticated(false);
+      setIsAdmin(false);
 
-      // Если ошибка 401, перехватчик в api.js уже перенаправит на /login,
-      // но мы дополнительно очищаем состояние
       if (err.response?.status === 401) {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
@@ -46,26 +53,54 @@ const Nav = () => {
     }
   }, [navigate]);
 
-  // Проверяем авторизацию и получаем username при монтировании и изменении состояния
-  useEffect(() => {
-    fetchUsername();
-  }, [fetchUsername]);
+  // Проверка статуса администратора
+  const fetchAdminStatus = useCallback(async () => {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      setIsAdmin(false);
+      return;
+    }
 
-  // Отслеживаем изменения в localStorage (на случай логина/регистрации)
+    try {
+      await axios.get("http://localhost:8000/api/admins/me/", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setIsAdmin(true);
+    } catch (err) {
+      setIsAdmin(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUserData();
+    fetchAdminStatus();
+  }, [fetchUserData, fetchAdminStatus]);
+
   useEffect(() => {
     const handleStorageChange = () => {
       const accessToken = localStorage.getItem("accessToken");
       setIsAuthenticated(!!accessToken);
       if (accessToken) {
-        fetchUsername();
+        fetchUserData();
+        fetchAdminStatus();
       } else {
         setUsername("Гость");
+        setAvatar(null);
+        setIsAdmin(false);
       }
     };
 
+    const handleAvatarUpdated = () => {
+      fetchUserData();
+    };
+
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, [fetchUsername]);
+    window.addEventListener("avatarUpdated", handleAvatarUpdated);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("avatarUpdated", handleAvatarUpdated);
+    };
+  }, [fetchUserData, fetchAdminStatus]);
 
   const handleLogoClick = () => {
     navigate("/");
@@ -77,12 +112,18 @@ const Nav = () => {
     localStorage.removeItem("userId");
     setIsAuthenticated(false);
     setUsername("Гость");
+    setAvatar(null);
+    setIsAdmin(false);
     setDropdownOpen(false);
     navigate("/login");
   };
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
+  };
+
+  const handleImageError = () => {
+    setAvatar(null);
   };
 
   return (
@@ -107,12 +148,27 @@ const Nav = () => {
               <li className={styles.item}>
                 <div className={styles.dropdown}>
                   <button
-                    className={styles.link}
+                    className={styles.userButton}
                     onClick={toggleDropdown}
                     aria-expanded={dropdownOpen}
                     aria-haspopup="true"
                   >
-                    {username || "Загрузка..."} <span className={styles.caret}>▼</span>
+                    <div className={styles.avatar}>
+                      {avatar ? (
+                        <img
+                          src={avatar}
+                          alt="User Avatar"
+                          className={styles.avatarImage}
+                          onError={handleImageError}
+                        />
+                      ) : (
+                        <div className={styles.avatarPlaceholder}>
+                          {username?.[0]?.toUpperCase() || "?"}
+                        </div>
+                      )}
+                    </div>
+                    <span className={styles.username}>{username || "Загрузка..."}</span>
+                    <span className={styles.caret}></span>
                   </button>
                   {dropdownOpen && (
                     <ul className={styles.dropdownMenu}>
@@ -129,15 +185,19 @@ const Nav = () => {
                           Настройки
                         </Link>
                       </li>
-                      <li className={styles.dropdownDivider}></li>
-                      <li className={styles.dropdownSection}>
-                        <span className={styles.sectionLabel}>Администрирование</span>
-                      </li>
-                      <li>
-                        <Link to="/admin" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
-                          Панель администратора
-                        </Link>
-                      </li>
+                      {isAdmin && (
+                        <>
+                          <li className={styles.dropdownDivider}></li>
+                          <li className={styles.dropdownSection}>
+                            <span className={styles.sectionLabel}>Администрирование</span>
+                          </li>
+                          <li>
+                            <Link to="/admin" className={styles.dropdownLink} onClick={() => setDropdownOpen(false)}>
+                              Панель администратора
+                            </Link>
+                          </li>
+                        </>
+                      )}
                       <li className={styles.dropdownDivider}></li>
                       <li>
                         <button

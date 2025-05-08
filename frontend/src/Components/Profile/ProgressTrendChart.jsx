@@ -39,16 +39,16 @@ const ProgressTrendChart = () => {
         chartInstanceRef.current.destroy();
       }
 
-      // Prepare data for chart
+
       const labels = activities.map((activity) =>
         format(parseISO(activity.date), "dd MMM yyyy")
       );
       const wordCounts = activities.map((activity) => activity.word_count);
 
-      // Create annotations for significant sessions (e.g., every 10th session or high word counts)
+
       const annotations = activities.reduce((acc, activity, index) => {
         const wordCount = activity.word_count;
-        // Mark every 10th session or sessions with word_count > average
+
         const avgWordCount =
           wordCounts.reduce((sum, count) => sum + count, 0) / wordCounts.length;
         if (index % 10 === 0 || wordCount > avgWordCount * 1.5) {
@@ -58,7 +58,7 @@ const ProgressTrendChart = () => {
             xMax: index,
             yMin: 0,
             yMax: wordCount,
-            borderColor: "rgba(255, 64, 129, 0.5)", // --error for visibility
+            borderColor: "rgba(255, 64, 129, 0.5)", 
             borderWidth: 1,
             label: {
               content: `${wordCount} слов`,
@@ -82,8 +82,8 @@ const ProgressTrendChart = () => {
             {
               label: "Изученные слова",
               data: wordCounts,
-              backgroundColor: "rgba(90, 101, 234, 0.6)", // --primary with opacity
-              borderColor: "#5a65ea", // --primary
+              backgroundColor: "rgba(90, 101, 234, 0.6)",
+              borderColor: "#5a65ea", 
               borderWidth: 2,
               fill: false,
               pointRadius: 4,
@@ -128,7 +128,7 @@ const ProgressTrendChart = () => {
               },
             },
             tooltip: {
-              backgroundColor: "#2c2f33", // --surface
+              backgroundColor: "#2c2f33",
               titleColor: "#dcdee3",
               bodyColor: "#dcdee3",
               callbacks: {

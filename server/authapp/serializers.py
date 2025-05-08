@@ -1,6 +1,18 @@
 from rest_framework import serializers
-from core.models import Users
+from core.models import Users, Admins
 from django.contrib.auth.hashers import make_password, check_password
+
+class UserSerializer(serializers.ModelSerializer):
+    avatar = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Users
+        fields = ['id_user', 'username', 'email', 'english_level', 'avatar', 'is_email_verificated', 'account_created_at']
+
+    def get_avatar(self, obj):
+        if obj.avatar and hasattr(obj.avatar, 'url'):
+            return self.context['request'].build_absolute_uri(obj.avatar.url)
+        return None
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -80,7 +92,6 @@ class UserLoginSerializer(serializers.Serializer):
 
         data['user'] = user
         return data
-    
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(write_only=True)
@@ -94,7 +105,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(data['old_password']):
             raise serializers.ValidationError({"old_password": "Неверный текущий пароль"})
         return data
-    
+
 class ChangeUsernameSerializer(serializers.Serializer):
     new_username = serializers.CharField(max_length=150)
 
@@ -108,3 +119,22 @@ class ChangeUsernameSerializer(serializers.Serializer):
         if Users.objects.filter(username=value).exists():
             raise serializers.ValidationError("Это имя пользователя уже занято.")
         return value
+
+class ChangeAvatarSerializer(serializers.ModelSerializer):
+    avatar = serializers.ImageField()
+
+    class Meta:
+        model = Users
+        fields = ['avatar']
+
+    def validate_avatar(self, value):
+        if value.size > 5 * 1024 * 1024:  # 5 MB
+            raise serializers.ValidationError("Файл слишком большой. Максимальный размер: 5 МБ.")
+        if not value.content_type.startswith('image/'):
+            raise serializers.ValidationError("Файл должен быть изображением (JPEG, PNG и т.д.).")
+        return value
+    
+class AdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Admins
+        fields = ['id_admin', 'first_name', 'surname', 'established_post']

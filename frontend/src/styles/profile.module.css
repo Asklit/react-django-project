@@ -17,10 +17,31 @@
 .avatar {
   width: 100px;
   height: 100px;
-  background-color: var(--surface);
   border-radius: 50%;
+  overflow: hidden;
   margin-right: var(--spacing-md);
   border: 2px solid var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--surface);
+  transition: transform 0.3s ease;
+}
+
+.avatar:hover {
+  transform: scale(1.05);
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  font-size: var(--font-size-xl);
+  color: var(--text);
+  font-weight: 500;
 }
 
 .username {
@@ -39,7 +60,6 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.activityContainer:hover,
 .activityContainer:hover {
   transform: translateY(-5px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -175,12 +195,10 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.chartTableContainer:hover,
-.fullWidthChartContainer:hover {
+.chartTableContainer:hover {
   transform: translateY(-5px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
-
 
 .chartContainer {
   background-color: var(--surface);
@@ -195,8 +213,7 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.chartContainer:hover,
-.fullWidthChartContainer:hover {
+.chartContainer:hover {
   transform: translateY(-5px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
@@ -209,12 +226,12 @@
 
 .chartWrapper {
   position: relative;
-  height: 240px; /* Adjusted for title space */
+  height: 240px;
   width: 100%;
 }
 
 .fullWidthChartContainer .chartWrapper {
-  height: 320px; /* Increased for larger chart */
+  height: 320px;
 }
 
 .totalWordsWidget {
@@ -235,7 +252,6 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.totalWordsWidget:hover,
 .totalWordsWidget:hover {
   transform: translateY(-5px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -264,15 +280,4 @@
   color: var(--error);
   font-size: var(--font-size-base);
   margin: var(--spacing-lg) 0;
-}
-
-.settingsContainer {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: var(--spacing-lg);
-  color: var(--text);
-  background-color: var(--surface);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  animation: slideIn 0.5s ease-out;
 }

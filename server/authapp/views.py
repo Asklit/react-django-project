@@ -2,7 +2,9 @@ from rest_framework import views, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
-from .serializers import UserRegisterSerializer, UserLoginSerializer, ChangePasswordSerializer, ChangeUsernameSerializer
+from .serializers import UserRegisterSerializer, UserLoginSerializer, ChangePasswordSerializer, ChangeUsernameSerializer, ChangeAvatarSerializer, UserSerializer, AdminSerializer
+from core.models import Users, Admins
+from rest_framework import generics
 
 class RegisterView(views.APIView):
     def post(self, request):
@@ -43,7 +45,6 @@ class ChangePasswordView(views.APIView):
             user.save()
             return Response({"status": "Пароль успешно изменен"}, status=status.HTTP_200_OK)
         return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
 
 class ChangeUsernameView(views.APIView):
     permission_classes = [IsAuthenticated]
@@ -59,3 +60,57 @@ class ChangeUsernameView(views.APIView):
                 "username": user.username
             }, status=status.HTTP_200_OK)
         return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+class ChangeAvatarView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangeAvatarSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            user.avatar = serializer.validated_data['avatar']
+            user.save()
+            return Response({
+                "status": "Аватар успешно обновлен",
+                "avatar_url": request.build_absolute_uri(user.avatar.url) if user.avatar else None
+            }, status=status.HTTP_200_OK)
+        return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+class UserDetailView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            user = Users.objects.get(pk=pk)
+            serializer = UserSerializer(user, context={'request': request})
+            return Response(serializer.data)
+        except Users.DoesNotExist:
+            return Response({"error": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
+
+class UserMeView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserSerializer(request.user, context={'request': request})
+        return Response(serializer.data)
+    
+
+class AdminMeView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AdminSerializer
+
+    def get_object(self):
+        try:
+            return Admins.objects.get(id_admin=self.request.user)
+        except Admins.DoesNotExist:
+            return None
+
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if not instance:
+            return Response(
+                {"detail": "Вы не являетесь администратором"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
