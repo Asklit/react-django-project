@@ -3,6 +3,7 @@ import axios from "axios";
 import { Line } from "react-chartjs-2";
 import { motion } from "framer-motion";
 import styles from "../../styles/AdminPanel.module.css";
+import api from "../../api"
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,32 +24,64 @@ function Dashboards() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [usersRes, wordsRes, adminsRes] = await Promise.all([
-          axios.get("http://localhost:8000/api/users/list/"),
-          axios.get("http://localhost:8000/api/words/list/"),
-          axios.get("http://localhost:8000/api/admins/"),
-        ]);
-        setStats({
-          users: usersRes.data.length,
+        console.log(`[${new Date().toISOString()}] Initiating stats fetch`);
+        
+        // console.log(`[${new Date().toISOString()}] Sending request to users endpoint: GET http://localhost:8000/api/users/list/`);
+        // const usersRes = await api.get("http://localhost:8000/api/users/list/");
+        // console.log(`[${new Date().toISOString()}] Users request completed. Status: ${usersRes.status}, Response length: ${usersRes.data.length}`);
+
+        console.log(`[${new Date().toISOString()}] Sending request to words endpoint: GET http://localhost:8000/api/words/list/`);
+        const wordsRes = await api.get("http://localhost:8000/api/words/list/");
+        console.log(`[${new Date().toISOString()}] Words request completed. Status: ${wordsRes.status}, Response length: ${wordsRes.data.length}`);
+
+        // console.log(`[${new Date().toISOString()}] Sending request to admins endpoint: GET http://localhost:8000/api/admins/`);
+        // const adminsRes = await api.get("http://localhost:8000/api/admins/");
+        // console.log(`[${new Date().toISOString()}] Admins request completed. Status: ${adminsRes.status}, Response length: ${adminsRes.data.length}`);
+
+        const statsData = {
+          // users: usersRes.data.length,
           words: wordsRes.data.length,
-          admins: adminsRes.data.length,
-        });
+          // admins: adminsRes.data.length,
+        };
+        console.log(`[${new Date().toISOString()}] Stats compiled:`, statsData);
+        
+        setStats(statsData);
       } catch (error) {
-        console.error("Ошибка загрузки статистики:", error);
+        console.error(`[${new Date().toISOString()}] Error fetching stats:`, {
+          message: error.message,
+          stack: error.stack,
+          response: error.response ? {
+            status: error.response.status,
+            data: error.response.data
+          } : null
+        });
       }
     };
 
     const fetchActivity = async () => {
       try {
+        console.log(`[${new Date().toISOString()}] Sending request to activity endpoint: GET http://localhost:8000/api/activity/users-daily/`);
         const res = await axios.get("http://localhost:8000/api/activity/users-daily/");
+        console.log(`[${new Date().toISOString()}] Activity request completed. Status: ${res.status}, Response length: ${res.data.length}`);
+        
         setActivityData(res.data);
+        console.log(`[${new Date().toISOString()}] Activity data updated:`, res.data);
       } catch (error) {
-        console.error("Ошибка загрузки активности пользователей:", error);
+        console.error(`[${new Date().toISOString()}] Error fetching activity:`, {
+          message: error.message,
+          stack: error.stack,
+          response: error.response ? {
+            status: error.response.status,
+            data: error.response.data
+          } : null
+        });
       }
     };
 
+    console.log(`[${new Date().toISOString()}] Starting dashboard data fetch`);
     fetchStats();
     fetchActivity();
+    console.log(`[${new Date().toISOString()}] Dashboard data fetch initiated`);
   }, []);
 
   const chartData = {

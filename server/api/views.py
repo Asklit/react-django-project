@@ -1,8 +1,12 @@
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from core.models import Users, Admins, UserActivity
-from vocabulary.models import Words, UserWordProgress
-from .serializers import UserSerializer, UserDetailsSerializer, WordSerializer, AdminSerializer, AdminCreateSerializer, AdminUpdateSerializer
+from vocabulary.models import Words, UserWordProgress, Stage, WordLevel, PartOfSpeech
+from .serializers import (
+    UserSerializer, UserDetailsSerializer, WordSerializer,
+    AdminSerializer, AdminCreateSerializer, AdminUpdateSerializer,
+    PartOfSpeechSerializer, WordSerializer, BulkWordUploadSerializer,
+)
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from datetime import date
 from config import ACTIVITY_WORD_THRESHOLD
@@ -10,6 +14,14 @@ from django.db import models
 from django.db.models import F
 from django.utils import timezone
 from django.db.models import Count
+from core.permissions import IsAdminOrSelf
+import logging
+from django.db import transaction
+import pandas as pd
+from rest_framework.views import APIView
+
+
+logger = logging.getLogger(__name__)
 
 STAGE_TRANSITIONS = {
     'introduction': {'next_stage': 'active_recall', 'interactions_needed': 1},
@@ -19,37 +31,34 @@ STAGE_TRANSITIONS = {
     'active_usage': {'next_stage': None, 'interactions_needed': 10},
 }
 
-
-class IsAdminOrSelf(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated
-
-    def has_object_permission(self, request, view, obj):
-        if Admins.objects.filter(id_admin=request.user).exists():
-            return True
-        return obj.id_admin == request.user
-
 class UsersCreateView(generics.ListCreateAPIView):
     serializer_class = UserSerializer
     queryset = Users.objects.all()
+    permission_classes = [IsAdminOrSelf]
 
     def create(self, request, *args, **kwargs):
+        logger.info(f"User creation request: {request.data}")
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            logger.info(f"User created successfully: {user.id_user}")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        logger.error(f"User creation errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UsersListView(generics.ListAPIView):
     serializer_class = UserDetailsSerializer
     queryset = Users.objects.all()
+    permission_classes = [IsAdminOrSelf]
 
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Users.objects.all()
     serializer_class = UserDetailsSerializer
     permission_classes = [IsAdminOrSelf]
+    lookup_field = 'id_user'
 
     def put(self, request, *args, **kwargs):
+        logger.info(f"User update request for id_user={self.kwargs['id_user']}: {request.data}")
         user = self.get_object()
         serializer = self.get_serializer(user, data=request.data, partial=True)
         if serializer.is_valid():
@@ -57,8 +66,24 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
                 user.set_password(request.data['password'])
                 user.save()
             serializer.save()
+            logger.info(f"User {user.id_user} updated successfully")
             return Response(serializer.data)
+        logger.error(f"User update errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            user = self.get_object()
+            logger.info(f"Attempting to delete user {user.id_user} by request.user {request.user.id_user}")
+            user.delete()
+            logger.info(f"Successfully deleted user {user.id_user}")
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Users.DoesNotExist:
+            logger.error(f"User {self.kwargs['id_user']} not found for deletion")
+            return Response({"error": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error deleting user {self.kwargs['id_user']}: {str(e)}")
+            return Response({"error": f"Ошибка при удалении пользователя: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserMeView(generics.RetrieveAPIView):
     serializer_class = UserDetailsSerializer
@@ -98,7 +123,7 @@ class WordsListView(generics.ListAPIView):
         level = self.request.query_params.get('level', None)
         queryset = Words.objects.all()
         if level and level != 'all':
-            queryset = queryset.filter(word_level=level)
+            queryset = queryset.filter(word_level__level=level)
         return queryset
 
 class AdminListCreateView(generics.ListCreateAPIView):
@@ -150,19 +175,19 @@ class UserStageWordsView(generics.ListAPIView):
             queryset = Words.objects.exclude(id_word__in=used_word_ids)
         else:
             queryset = Words.objects.filter(
-                userwordprogress__user=user,
-                userwordprogress__stage=stage
+                userwordprogress_set__user=user,
+                userwordprogress_set__stage__name=stage
             )
 
         if level and level != 'all':
-            queryset = queryset.filter(word_level=level)
+            queryset = queryset.filter(word_level__level=level)
 
         words = list(queryset.distinct())[:4]
         if len(words) < 4:
             exclude_ids = [w.id_word for w in words]
             additional_queryset = Words.objects.exclude(id_word__in=exclude_ids)
             if level and level != 'all':
-                additional_queryset = additional_queryset.filter(word_level=level)
+                additional_queryset = additional_queryset.filter(word_level__level=level)
             additional_words = list(additional_queryset.distinct())[:4 - len(words)]
             words.extend(additional_words)
 
@@ -188,18 +213,18 @@ class UpdateWordProgressView(generics.GenericAPIView):
         progress, created = UserWordProgress.objects.get_or_create(
             user=user,
             word=word,
-            defaults={'stage': 'introduction', 'interaction_count': 0}
+            defaults={'stage': Stage.objects.get(name='introduction'), 'interaction_count': 0}
         )
 
         if is_correct:
             progress.interaction_count += 1
-            current_stage = progress.stage
+            current_stage = progress.stage.name
             transition_info = STAGE_TRANSITIONS.get(current_stage)
             if (
                 transition_info['next_stage'] and
                 progress.interaction_count >= transition_info['interactions_needed']
             ):
-                progress.stage = transition_info['next_stage']
+                progress.stage = Stage.objects.get(name=transition_info['next_stage'])
                 progress.interaction_count = 0
             progress.save()
 
@@ -215,9 +240,9 @@ class UpdateWordProgressView(generics.GenericAPIView):
 
         return Response({
             'status': 'success',
-            'stage': progress.stage,
+            'stage': progress.stage.name,
             'interaction_count': progress.interaction_count,
-            'interactions_needed': STAGE_TRANSITIONS[progress.stage]['interactions_needed']
+            'interactions_needed': STAGE_TRANSITIONS[progress.stage.name]['interactions_needed']
         })
 
 class StageCountsView(generics.GenericAPIView):
@@ -225,16 +250,21 @@ class StageCountsView(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         user = self.request.user
-        stage_counts = {
-            'introduction': Words.objects.exclude(
-                userwordprogress__user=user
-            ).count(),
-            'active_recall': UserWordProgress.objects.filter(user=user, stage='active_recall').count(),
-            'consolidation': UserWordProgress.objects.filter(user=user, stage='consolidation').count(),
-            'spaced_repetition': UserWordProgress.objects.filter(user=user, stage='spaced_repetition').count(),
-            'active_usage': UserWordProgress.objects.filter(user=user, stage='active_usage').count(),
-        }
-        return Response(stage_counts)
+        try:
+            stage_counts = {
+                'introduction': Words.objects.exclude(
+                    user_progress__user=user
+                ).count(),
+                'active_recall': UserWordProgress.objects.filter(user=user, stage__name='active_recall').count(),
+                'consolidation': UserWordProgress.objects.filter(user=user, stage__name='consolidation').count(),
+                'spaced_repetition': UserWordProgress.objects.filter(user=user, stage__name='spaced_repetition').count(),
+                'active_usage': UserWordProgress.objects.filter(user=user, stage__name='active_usage').count(),
+            }
+            logger.info(f"Stage counts for user {user.id_user}: {stage_counts}")
+            return Response(stage_counts)
+        except Exception as e:
+            logger.error(f"Error in StageCountsView for user {user.id_user}: {str(e)}")
+            return Response({"error": f"Failed to fetch stage counts: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserActivityView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -306,14 +336,14 @@ class UserLevelProgressView(generics.GenericAPIView):
         studied_words = {
             level: UserWordProgress.objects.filter(
                 user=user,
-                stage__in=['active_recall', 'consolidation', 'spaced_repetition', 'active_usage'],
-                word__word_level=level
+                stage__name__in=['active_recall', 'consolidation', 'spaced_repetition', 'active_usage'],
+                word__word_level__level=level
             ).count()
             for level in levels
         }
         
         total_words = {
-            level: Words.objects.filter(word_level=level).count()
+            level: Words.objects.filter(word_level__level=level).count()
             for level in levels
         }
 
@@ -321,7 +351,7 @@ class UserLevelProgressView(generics.GenericAPIView):
             'studied_words': studied_words,
             'total_words': total_words
         })
-    
+
 class DailyUserActivityView(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         days = 30
@@ -342,3 +372,134 @@ class DailyUserActivityView(generics.GenericAPIView):
             result.append({"date": date_str, "user_count": activity_dict.get(date_str, 0)})
             current_date += timezone.timedelta(days=1)
         return Response(result)
+    
+class WordLevelListView(generics.ListAPIView):
+    queryset = WordLevel.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        levels = WordLevel.objects.values('level')
+        return Response(levels)
+    
+class PartOfSpeechListView(APIView):
+    def get(self, request):
+        try:
+            parts_of_speech = PartOfSpeech.objects.all()
+            serializer = PartOfSpeechSerializer(parts_of_speech, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error fetching parts of speech: {str(e)}")
+            return Response({"error": "Ошибка при загрузке частей речи"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class BulkWordUploadView(APIView):
+    def post(self, request):
+        try:
+            file = request.FILES.get('file')
+            if not file:
+                return Response({"error": "Файл не предоставлен"}, status=status.HTTP_400_BAD_REQUEST)
+            if not file.name.endswith(('.xlsx', '.xls')):
+                return Response({"error": "Файл должен быть в формате Excel (.xlsx или .xls)"}, status=status.HTTP_400_BAD_REQUEST)
+
+            df = pd.read_excel(file)
+            expected_columns = ['Word (English)', 'Part of Speech', 'Translation (Russian)', 'CEFR Level', 'Rating']
+            if list(df.columns) != expected_columns:
+                return Response({
+                    "error": "Неверный формат файла. Ожидаемые столбцы: " + ", ".join(expected_columns)
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            errors = []
+            words_to_create = []
+            existing_words = []
+            level_counts = {}
+            skipped_count = 0
+            new_levels_created = []
+            new_parts_of_speech_created = []
+
+            for index, row in df.iterrows():
+                word_data = {
+                    'word': str(row['Word (English)']).strip(),
+                    'part_of_speech': str(row['Part of Speech']).strip(),
+                    'translate_word': str(row['Translation (Russian)']).strip(),
+                    'word_level': str(row['CEFR Level']).strip().upper(),
+                    'rating': int(row['Rating']) if pd.notna(row['Rating']) else 1
+                }
+
+                if not word_data['word'] or not word_data['translate_word']:
+                    errors.append(f"Строка {index + 2}: Поля 'Word (English)' и '2' обязательны")
+                    continue
+
+                try:
+                    part_of_speech, created = PartOfSpeech.objects.get_or_create(name=word_data['part_of_speech'])
+                    if created:
+                        logger.info(f"Created new part of speech: {word_data['part_of_speech']}")
+                        new_parts_of_speech_created.append(word_data['part_of_speech'])
+                except Exception as e:
+                    errors.append(f"Строка {index + 2}: Ошибка при обработке части речи '{word_data['part_of_speech']}': {str(e)}")
+                    continue
+
+                try:
+                    word_level, created = WordLevel.objects.get_or_create(level=word_data['word_level'])
+                    if created:
+                        logger.info(f"Created new CEFR level: {word_data['word_level']}")
+                        new_levels_created.append(word_data['word_level'])
+                except Exception as e:
+                    errors.append(f"Строка {index + 2}: Ошибка при обработке уровня CEFR '{word_data['word_level']}': {str(e)}")
+                    continue
+
+                if word_data['word_level'] not in level_counts:
+                    level_counts[word_data['word_level']] = 0
+
+                if word_data['rating'] < 1:
+                    errors.append(f"Строка {index + 2}: Рейтинг должен быть не менее 1")
+                    continue
+
+                if Words.objects.filter(word=word_data['word'], word_level=word_level).exists():
+                    existing_words.append(f"{word_data['word']} ({word_data['word_level']})")
+                    skipped_count += 1
+                    continue
+
+                words_to_create.append({
+                    'word': word_data['word'],
+                    'part_of_speech': part_of_speech,
+                    'translate_word': word_data['translate_word'],
+                    'word_level': word_level,
+                    'rating': word_data['rating']
+                })
+                level_counts[word_data['word_level']] += 1
+
+            if errors:
+                return Response({"errors": errors}, status=status.HTTP_400_BAD_REQUEST)
+
+            with transaction.atomic():
+                created_words = []
+                for word_data in words_to_create:
+                    word, created = Words.objects.get_or_create(
+                        word=word_data['word'],
+                        word_level=word_data['word_level'],
+                        defaults={
+                            'part_of_speech': word_data['part_of_speech'],
+                            'translate_word': word_data['translate_word'],
+                            'rating': word_data['rating']
+                        }
+                    )
+                    if created:
+                        created_words.append(word)
+                logger.info(f"Bulk upload: {len(created_words)} words created")
+                return Response({
+                    'message': 'Слова успешно добавлены',
+                    'added_count': len(created_words),
+                    'level_counts': level_counts,
+                    'skipped_count': skipped_count,
+                    'existing_words': existing_words,
+                    'new_levels_created': new_levels_created,
+                    'new_parts_of_speech_created': new_parts_of_speech_created
+                }, status=status.HTTP_201_CREATED)
+
+        except pd.errors.EmptyDataError:
+            logger.error("Uploaded file is empty")
+            return Response({"error": "Загруженный файл пуст"}, status=status.HTTP_400_BAD_REQUEST)
+        except pd.errors.ParserError:
+            logger.error("Error parsing Excel file")
+            return Response({"error": "Ошибка при разборе файла Excel"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.error(f"Unexpected error in bulk upload: {str(e)}")
+            return Response({"error": f"Неожиданная ошибка при обработке файла: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

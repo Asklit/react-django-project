@@ -9,6 +9,7 @@ function Admins() {
   const [formErrors, setFormErrors] = useState({});
   const [hoveredCell, setHoveredCell] = useState({ row: null, col: null });
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "ascending" });
+  const [successMessage, setSuccessMessage] = useState(""); // New state for success message
 
   const [newAdmin, setNewAdmin] = useState({
     id_admin: "",
@@ -63,11 +64,15 @@ function Admins() {
   };
 
   const handleDelete = async (id_admin) => {
+    if (!window.confirm("Вы уверены, что хотите удалить этого администратора?")) {
+      return;
+    }
     try {
       const url = `http://localhost:8000/api/admins/${id_admin}/`;
       console.log(`Deleting admin at URL: ${url}`);
-      const response = await api.delete(url);
-      console.log("Admin deleted successfully:", response.data);
+      await api.delete(url);
+      setSuccessMessage("Администратор успешно удален!");
+      setTimeout(() => setSuccessMessage(""), 3000); // Clear message after 3 seconds
       fetchAdminsData();
     } catch (error) {
       console.error("There has been a problem with the delete admin operation:", error.response ? error.response.data : error.message);
@@ -85,8 +90,7 @@ function Admins() {
       const url = `http://localhost:8000/api/admins/${id_admin}/`;
       const updatedData = { [field]: value };
       console.log(`Updating admin at URL: ${url}`, updatedData);
-      const response = await api.put(url, updatedData);
-      console.log("Admin updated successfully:", response.data);
+      await api.put(url, updatedData);
     } catch (error) {
       console.error("There has been a problem with the update admin operation:", error.response ? error.response.data : error.message);
     }
@@ -126,17 +130,21 @@ function Admins() {
 
   return (
     <>
+      {successMessage && (
+        <div className={styles.successMessage}>{successMessage}</div>
+      )}
       <form onSubmit={(e) => handleSubmit(e)} className={styles.admin_form}>
         <div>
           <select
             name="id_admin"
             value={newAdmin.id_admin}
             onChange={(e) => setNewAdmin({ ...newAdmin, id_admin: e.target.value })}
-            className={styles.admin_input}
+            className={`${styles.admin_input} ${styles.dropdown} ${formErrors.id_admin ? styles.inputError : ""}`}
+            disabled={availableUsers.length === 0}
           >
             <option value="">Выберите пользователя</option>
             {availableUsers.map((user) => (
-              <option key={user.id_user} value={user.id_user}>
+              <option key={user.id_user} value={user.id_user} className={styles.dropdownOption}>
                 {user.username} (ID: {user.id_user})
               </option>
             ))}
@@ -150,7 +158,7 @@ function Admins() {
             placeholder="Имя"
             value={newAdmin.first_name}
             onChange={(e) => setNewAdmin({ ...newAdmin, first_name: e.target.value })}
-            className={styles.admin_input}
+            className={`${styles.admin_input} ${formErrors.first_name ? styles.inputError : ""}`}
             spellCheck="false"
           />
           {formErrors.first_name && <span className={styles.error}>{formErrors.first_name.join(", ")}</span>}
@@ -162,7 +170,7 @@ function Admins() {
             placeholder="Фамилия"
             value={newAdmin.surname}
             onChange={(e) => setNewAdmin({ ...newAdmin, surname: e.target.value })}
-            className={styles.admin_input}
+            className={`${styles.admin_input} ${formErrors.surname ? styles.inputError : ""}`}
             spellCheck="false"
           />
           {formErrors.surname && <span className={styles.error}>{formErrors.surname.join(", ")}</span>}
@@ -174,7 +182,7 @@ function Admins() {
             placeholder="Должность"
             value={newAdmin.established_post}
             onChange={(e) => setNewAdmin({ ...newAdmin, established_post: e.target.value })}
-            className={styles.admin_input}
+            className={`${styles.admin_input} ${formErrors.established_post ? styles.inputError : ""}`}
             spellCheck="false"
           />
           {formErrors.established_post && <span className={styles.error}>{formErrors.established_post.join(", ")}</span>}
@@ -193,6 +201,7 @@ function Admins() {
             <th onClick={() => requestSort("first_name")} className={sortConfig.key === "first_name" ? styles[sortConfig.direction] : ""}>Имя</th>
             <th onClick={() => requestSort("surname")} className={sortConfig.key === "surname" ? styles[sortConfig.direction] : ""}>Фамилия</th>
             <th onClick={() => requestSort("established_post")} className={sortConfig.key === "established_post" ? styles[sortConfig.direction] : ""}>Должность</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -229,6 +238,7 @@ function Admins() {
                   value={admin.first_name}
                   onChange={(e) => handleChange(admin.id_admin, "first_name", e.target.value)}
                   spellCheck="false"
+                  className={styles.cellInput}
                 />
               </td>
               <td
@@ -241,6 +251,7 @@ function Admins() {
                   value={admin.surname}
                   onChange={(e) => handleChange(admin.id_admin, "surname", e.target.value)}
                   spellCheck="false"
+                  className={styles.cellInput}
                 />
               </td>
               <td
@@ -253,6 +264,7 @@ function Admins() {
                   value={admin.established_post}
                   onChange={(e) => handleChange(admin.id_admin, "established_post", e.target.value)}
                   spellCheck="false"
+                  className={styles.cellInput}
                 />
               </td>
               <td className={styles.border_none}>

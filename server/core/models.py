@@ -38,9 +38,10 @@ class Users(AbstractBaseUser, PermissionsMixin):
         unique=True,
         error_messages={'max_length': 'Неверный формат электронной почты.'}
     )
-    english_level = models.CharField(
-        max_length=2,
-        error_messages={'max_length': 'Убедитесь, что это поле не содержит более 2 символов.'}
+    english_level = models.ForeignKey(
+        'vocabulary.WordLevel',
+        on_delete=models.CASCADE,
+        error_messages={'null': 'Уровень английского обязателен.'}
     )
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     is_email_verificated = models.BooleanField(default=False)
@@ -58,6 +59,9 @@ class Users(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         db_table = "Users"
+        indexes = [
+            models.Index(fields=['last_day_online']),
+        ]
 
     def __str__(self):
         return f"{self.email} {self.username}"

@@ -49,40 +49,31 @@ const Main = () => {
 
   const initializeWordsPool = useCallback(
     (words, stageCounts) => {
-      console.log("initializeWordsPool: userLevel =", userLevel);
-      console.log("initializeWordsPool: words count =", words.length);
-      console.log("initializeWordsPool: stageCounts =", stageCounts);
-
       if (!words || words.length === 0) {
         console.warn("No words available to initialize pool");
         setWordsPool([]);
         setCurrentWords([]);
         return;
       }
-
+  
       let pool = [];
-
-      // Если слов меньше или равно POOL_SIZE, используем их все
+  
       if (words.length <= POOL_SIZE) {
         pool = [...words];
       } else {
-        // Логика выбора слов по уровню и стадии
         const userLevelIndex = userLevel && levelOrder.includes(userLevel)
           ? levelOrder.indexOf(userLevel)
           : levelOrder.indexOf("B1");
         const lowerLevels = levelOrder.slice(0, userLevelIndex);
         const higherLevels = levelOrder.slice(userLevelIndex + 1);
         const currentLevel = levelOrder[userLevelIndex];
-
-        console.log("lowerLevels =", lowerLevels);
-        console.log("higherLevels =", higherLevels);
-        console.log("currentLevel =", currentLevel);
-
+  
         if (selectedStage !== "all") {
+          // Фильтрация по стадии (stage теперь есть в данных)
           const stagedWords = words.filter((word) => word.stage === selectedStage);
-          console.log("stagedWords count =", stagedWords.length);
-
+          
           if (stagedWords.length === 0) {
+            // Если слов для выбранной стадии нет, используем уровни
             const lowerLevelWords = words.filter((word) =>
               lowerLevels.includes(word.word_level)
             );
@@ -92,13 +83,14 @@ const Main = () => {
             const higherLevelWords = words.filter((word) =>
               higherLevels.includes(word.word_level)
             );
-
+  
             pool = [
               ...getRandomWords(lowerLevelWords, 5),
               ...getRandomWords(currentLevelWords, 10),
               ...getRandomWords(higherLevelWords, 5),
             ];
           } else {
+            // Используем слова с выбранной стадией
             const lowerLevelWords = stagedWords.filter((word) =>
               lowerLevels.includes(word.word_level)
             );
@@ -108,7 +100,7 @@ const Main = () => {
             const higherLevelWords = stagedWords.filter((word) =>
               higherLevels.includes(word.word_level)
             );
-
+  
             pool = [
               ...getRandomWords(lowerLevelWords, 5),
               ...getRandomWords(currentLevelWords, 10),
@@ -116,47 +108,28 @@ const Main = () => {
             ];
           }
         } else {
-          const hasWordsInStages =
-            isAuthenticated &&
-            Object.values(stageCounts).some((count) => count > 0);
-
-          if (!hasWordsInStages) {
-            const lowerLevelWords = words.filter((word) =>
-              lowerLevels.includes(word.word_level)
-            );
-            const currentLevelWords = words.filter((word) =>
-              word.word_level === currentLevel
-            );
-            const higherLevelWords = words.filter((word) =>
-              higherLevels.includes(word.word_level)
-            );
-
-            pool = [
-              ...getRandomWords(lowerLevelWords, 5),
-              ...getRandomWords(currentLevelWords, 10),
-              ...getRandomWords(higherLevelWords, 5),
-            ];
-          } else {
-            const stagedWords = words.filter(
-              (word) => word.stage && word.stage !== "none"
-            );
-            const newWords = words.filter(
-              (word) => !word.stage || word.stage === "none"
-            );
-
-            pool = [
-              ...getRandomWords(stagedWords, 15),
-              ...getRandomWords(newWords, 5),
-            ];
-          }
+          // Логика для "all" остается прежней
+          const lowerLevelWords = words.filter((word) =>
+            lowerLevels.includes(word.word_level)
+          );
+          const currentLevelWords = words.filter((word) =>
+            word.word_level === currentLevel
+          );
+          const higherLevelWords = words.filter((word) =>
+            higherLevels.includes(word.word_level)
+          );
+  
+          pool = [
+            ...getRandomWords(lowerLevelWords, 5),
+            ...getRandomWords(currentLevelWords, 10),
+            ...getRandomWords(higherLevelWords, 5),
+          ];
         }
-
-        // Удаление дубликатов по id_word
+  
         pool = Array.from(
           new Map(pool.map((word) => [word.id_word, word])).values()
         );
-
-        // Заполнение пула до POOL_SIZE уникальными словами, если возможно
+  
         if (pool.length < POOL_SIZE) {
           const remainingWords = words.filter(
             (w) => !pool.some((pw) => pw.id_word === w.id_word)
@@ -164,10 +137,7 @@ const Main = () => {
           pool = [...pool, ...getRandomWords(remainingWords, POOL_SIZE - pool.length)];
         }
       }
-
-      console.log("Final pool count =", pool.length);
-      console.log("Pool levels:", pool.map((w) => w.word_level));
-
+  
       setWordsPool(pool);
       setCurrentWords(getRandomWords(pool, Math.min(MAX_CARDS, pool.length)));
     },

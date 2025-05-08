@@ -1,31 +1,26 @@
-import os
-import django
-from django.conf import settings
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'server.settings') 
-django.setup()
-
-from vocabulary.models import Words
-
 import pandas as pd
-df = pd.read_excel('expanded_words.xlsx')
-excel_data = [tuple(row) for row in df.values[1:]] 
 
-def import_words():
-    Words.objects.all().delete()
+def get_parts_of_speech_from_excel(file_path):
+    # Читаем Excel-файл
+    df = pd.read_excel(file_path)
+    
+    # Извлекаем уникальные части речи
+    parts_of_speech = df['Part of Speech'].unique()
+    
+    # Очищаем данные (удаляем лишние пробелы и приводим к нижнему регистру)
+    cleaned_parts = set()
+    for pos in parts_of_speech:
+        if pd.notna(pos):  # Проверяем, что значение не NaN
+            # Удаляем лишние пробелы и скобки с содержимым
+            cleaned_pos = pos.split('(')[0].strip().lower()
+            cleaned_parts.add(cleaned_pos)
+    
+    return sorted(cleaned_parts)
 
-    for word, part_of_speech, translate_word, word_level, rating in excel_data:
-        try:
-            Words.objects.create(
-                word=word,
-                part_of_speech=part_of_speech,
-                translate_word=translate_word,
-                word_level=word_level,
-                rating=rating
-            )
-            print(f"Добавлено: {word}")
-        except Exception as e:
-            print(f"Error {word}: {e}")
+# Пример использования
+file_path = 'expanded_words.xlsx'  # Укажите путь к вашему файлу
+parts_of_speech = get_parts_of_speech_from_excel(file_path)
 
-if __name__ == "__main__":
-    import_words()
+print("Уникальные части речи в таблице:")
+for i, pos in enumerate(parts_of_speech, 1):
+    print(f"{i}. {pos}")

@@ -12,3 +12,7 @@ python-dotenv
 django_extensions
 python-decouple
 Pillow
+pandas 
+openpyxl
+django-silk
+redis

@@ -1,8 +1,12 @@
 from rest_framework import views, status
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
-from .serializers import UserRegisterSerializer, UserLoginSerializer, ChangePasswordSerializer, ChangeUsernameSerializer, ChangeAvatarSerializer, UserSerializer, AdminSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from api.serializers import (
+    UserRegisterSerializer, UserLoginSerializer, 
+    ChangePasswordSerializer, ChangeUsernameSerializer, 
+    ChangeAvatarSerializer, AdminSerializer
+)
 from core.models import Users, Admins
 from rest_framework import generics
 
@@ -75,25 +79,6 @@ class ChangeAvatarView(views.APIView):
                 "avatar_url": request.build_absolute_uri(user.avatar.url) if user.avatar else None
             }, status=status.HTTP_200_OK)
         return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-class UserDetailView(views.APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, pk):
-        try:
-            user = Users.objects.get(pk=pk)
-            serializer = UserSerializer(user, context={'request': request})
-            return Response(serializer.data)
-        except Users.DoesNotExist:
-            return Response({"error": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
-
-class UserMeView(views.APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        serializer = UserSerializer(request.user, context={'request': request})
-        return Response(serializer.data)
-    
 
 class AdminMeView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]

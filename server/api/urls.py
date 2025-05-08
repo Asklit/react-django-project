@@ -5,11 +5,11 @@ from .views import (
     AdminListCreateView, AdminDetailView,
     UserStageWordsView, UpdateWordProgressView, StageCountsView,
     UserActivityView, UserMeView, UserActivityUpdateView,
-    UserLevelProgressView,DailyUserActivityView,
+    UserLevelProgressView, DailyUserActivityView,
+    WordLevelListView, PartOfSpeechListView, BulkWordUploadView
 )
 from authapp.views import RegisterView, LoginView, ChangePasswordView, ChangeUsernameView, ChangeAvatarView, AdminMeView
 from rest_framework_simplejwt.views import TokenRefreshView
-
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -24,11 +24,13 @@ urlpatterns = [
     path('users/', UsersCreateView.as_view(), name='users-create'),
     path('users/list/', UsersListView.as_view(), name='users-list'),
     path('users/me/', UserMeView.as_view(), name='user-me'),
-    path('users/<int:pk>/', UserDetailView.as_view(), name='user-detail'),
+    path('users/<int:id_user>/', UserDetailView.as_view(), name='user-detail'),
     
     path('words/', WordsCreateView.as_view(), name='words-create'),
     path('words/list/', WordsListView.as_view(), name='words-list'),
     path('words/<int:pk>/', WordDetailView.as_view(), name='word-detail'),
+    path('parts-of-speech/', PartOfSpeechListView.as_view(), name='part-of-speech-list'),
+    path('words/bulk-upload/', BulkWordUploadView.as_view(), name='bulk-word-upload'),
     
     path('words/stage/', UserStageWordsView.as_view(), name='user-stage-words'),
     path('words/progress/', UpdateWordProgressView.as_view(), name='update-word-progress'),
@@ -42,5 +44,7 @@ urlpatterns = [
     path('users/activity/update/', UserActivityUpdateView.as_view(), name='user-activity-update'),
     path('activity/users-daily/', DailyUserActivityView.as_view(), name='users-daily-activity'),
 
+    path('levels/', WordLevelListView.as_view(), name='word-levels'),  # New endpoint
+    
     path('admins/me/', AdminMeView.as_view(), name='admin-me'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
