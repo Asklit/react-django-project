@@ -4,7 +4,6 @@ import axios from "axios";
 import DateDisplay from "./DateFormat";
 import api from "../../api"
 
-
 function Users() {
   const [users, setUsers] = useState([]);
   const [formErrors, setFormErrors] = useState({});

@@ -25,9 +25,9 @@ class IsAdminOrSelf(permissions.BasePermission):
         return request.user and request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
-        if Admins.objects.filter(id_admin=request.user).exists():
+        if Admins.objects.filter(id_admin=request.user.id_user).exists():
             return True
-        return obj.id_admin == request.user
+        return obj.id_user == request.user.id_user
 
 class UsersCreateView(generics.ListCreateAPIView):
     serializer_class = UserSerializer
@@ -301,7 +301,7 @@ class UserLevelProgressView(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         user = self.request.user
-        levels = ['A1', 'A2', 'B1', 'B2', 'C1']
+        levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
         
         studied_words = {
             level: UserWordProgress.objects.filter(
