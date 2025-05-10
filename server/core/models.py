@@ -46,7 +46,7 @@ class Users(AbstractBaseUser, PermissionsMixin):
     avatar = models.BinaryField(null=True, blank=True)
     is_email_verificated = models.BooleanField(default=False)
     account_created_at = models.DateTimeField(auto_now_add=True)
-    password_changed_at = models.DateTimeField(auto_now=True)
+    password_changed_at = models.DateTimeField(null=True, blank=True)
     last_day_online = models.DateTimeField(auto_now_add=True)
     
     is_active = models.BooleanField(default=True)
