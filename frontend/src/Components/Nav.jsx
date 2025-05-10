@@ -12,7 +12,6 @@ const Nav = () => {
   const [isAdmin, setIsAdmin] = useState(false); // Статус администратора
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Функция для получения данных пользователя
   const fetchUserData = useCallback(async () => {
     const accessToken = localStorage.getItem("accessToken");
     const userId = localStorage.getItem("userId");
@@ -26,19 +25,23 @@ const Nav = () => {
     }
 
     try {
-      const response = await api.get(`/users/${userId}/`);
-      if (response.data && response.data.username) {
-        setUsername(response.data.username);
-        setAvatar(response.data.avatar || null);
+      // Запрашиваем данные пользователя
+      const userResponse = await api.get(`/users/${userId}/`);
+      if (userResponse.data && userResponse.data.username) {
+        setUsername(userResponse.data.username);
         setIsAuthenticated(true);
       } else {
-        setUsername("Гость");
-        setAvatar(null);
-        setIsAuthenticated(false);
-        setIsAdmin(false);
+        throw new Error("Invalid user data");
       }
+
+      // Запрашиваем аватар
+      const avatarResponse = await api.get(`/auth/get-avatar/${userId}/`, {
+        responseType: 'blob', // Указываем, что ожидаем бинарные данные
+      });
+      const imageUrl = URL.createObjectURL(avatarResponse.data);
+      setAvatar(imageUrl);
     } catch (err) {
-      console.error("Failed to fetch user data:", err);
+      console.error("Failed to fetch user data or avatar:", err);
       setUsername("Гость");
       setAvatar(null);
       setIsAuthenticated(false);
@@ -99,8 +102,11 @@ const Nav = () => {
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("avatarUpdated", handleAvatarUpdated);
+      if (avatar) {
+        URL.revokeObjectURL(avatar);
+      }
     };
-  }, [fetchUserData, fetchAdminStatus]);
+  }, [fetchUserData, fetchAdminStatus, avatar]);
 
   const handleLogoClick = () => {
     navigate("/");

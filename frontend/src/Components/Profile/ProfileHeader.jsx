@@ -7,11 +7,17 @@ const ProfileHeader = ({ username }) => {
 
   const fetchAvatar = async () => {
     const userId = localStorage.getItem("userId");
-    if (!userId) return;
+    if (!userId) {
+      setAvatar(null);
+      return;
+    }
 
     try {
-      const response = await api.get(`/users/${userId}/`);
-      setAvatar(response.data.avatar || null);
+      const response = await api.get(`/auth/get-avatar/${userId}/`, {
+        responseType: 'blob', 
+      });
+      const imageUrl = URL.createObjectURL(response.data);
+      setAvatar(imageUrl);
     } catch (err) {
       console.error("Failed to fetch avatar:", err);
       setAvatar(null);
@@ -28,11 +34,14 @@ const ProfileHeader = ({ username }) => {
     window.addEventListener("avatarUpdated", handleAvatarUpdated);
     return () => {
       window.removeEventListener("avatarUpdated", handleAvatarUpdated);
+      if (avatar) {
+        URL.revokeObjectURL(avatar);
+      }
     };
-  }, []);
+  }, [avatar]);
 
   const handleImageError = () => {
-    setAvatar(null); 
+    setAvatar(null);
   };
 
   return (

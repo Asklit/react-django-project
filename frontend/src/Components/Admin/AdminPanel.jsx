@@ -6,12 +6,15 @@ import Users from "./Users";
 import Words from "./Words";
 import Admins from "./Admins";
 import Dashboards from "./Dashboards";
+import Stages from "./Stages";
+import WordLevels from "./WordLevels";
+import PartsOfSpeech from "./PartsOfSpeech";
 
 function AdminPanel() {
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem("activeTab") || "users";
   });
-  const [isAdmin, setIsAdmin] = useState(null); // null - загрузка, true - админ, false - не админ
+  const [isAdmin, setIsAdmin] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -45,6 +48,12 @@ function AdminPanel() {
         return <Admins />;
       case "dashboards":
         return <Dashboards />;
+      case "stages":
+        return <Stages />;
+      case "wordlevels":
+        return <WordLevels />;
+      case "partsofspeech":
+        return <PartsOfSpeech />;
       default:
         return <Users />;
     }
@@ -89,6 +98,24 @@ function AdminPanel() {
           onClick={() => setActiveTab("admins")}
         >
           Администраторы
+        </button>
+        <button
+          className={`${styles.admin_tab} ${activeTab === "stages" ? styles.active : ""}`}
+          onClick={() => setActiveTab("stages")}
+        >
+          Этапы
+        </button>
+        <button
+          className={`${styles.admin_tab} ${activeTab === "wordlevels" ? styles.active : ""}`}
+          onClick={() => setActiveTab("wordlevels")}
+        >
+          Уровни слов
+        </button>
+        <button
+          className={`${styles.admin_tab} ${activeTab === "partsofspeech" ? styles.active : ""}`}
+          onClick={() => setActiveTab("partsofspeech")}
+        >
+          Части речи
         </button>
       </div>
 

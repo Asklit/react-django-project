@@ -638,3 +638,32 @@
   font-size: 0.875rem;
   color: var(--text);
 }
+
+.statItem {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: var(--surface);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.statItem h3 {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-sm);
+  color: var(--primary);
+}
+
+.statItem p {
+  font-size: var(--font-size-base);
+  margin: var(--spacing-xs) 0;
+}
+
+.statItem ul {
+  list-style-type: disc;
+  margin-left: var(--spacing-md);
+  font-size: var(--font-size-sm);
+}
+
+.statItem li {
+  margin-bottom: var(--spacing-xs);
+}

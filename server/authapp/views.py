@@ -1,4 +1,5 @@
 from rest_framework import views, status
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -9,6 +10,7 @@ from api.serializers import (
 )
 from core.models import Users, Admins
 from rest_framework import generics
+from django.http import HttpResponse
 
 class RegisterView(views.APIView):
     def post(self, request):
@@ -72,11 +74,12 @@ class ChangeAvatarView(views.APIView):
         serializer = ChangeAvatarSerializer(data=request.data)
         if serializer.is_valid():
             user = request.user
-            user.avatar = serializer.validated_data['avatar']
+            avatar_file = serializer.validated_data['avatar']
+            avatar_binary = avatar_file.read()
+            user.avatar = avatar_binary
             user.save()
             return Response({
                 "status": "Аватар успешно обновлен",
-                "avatar_url": request.build_absolute_uri(user.avatar.url) if user.avatar else None
             }, status=status.HTTP_200_OK)
         return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -99,3 +102,13 @@ class AdminMeView(generics.RetrieveAPIView):
             )
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+    
+class GetAvatarView(APIView):
+    def get(self, request, user_id):
+        try:
+            user = Users.objects.get(id_user=user_id)
+            if user.avatar:
+                return HttpResponse(user.avatar, content_type="image/jpeg")
+            return Response({"error": "Аватар не найден"}, status=status.HTTP_404_NOT_FOUND)
+        except Users.DoesNotExist:
+            return Response({"error": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)

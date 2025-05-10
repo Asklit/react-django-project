@@ -1,12 +1,13 @@
-from rest_framework import generics, status, permissions
+from rest_framework import generics, status
 from rest_framework.response import Response
 from core.models import Users, Admins, UserActivity
 from vocabulary.models import Words, UserWordProgress, Stage, WordLevel, PartOfSpeech
 from .serializers import (
     UserSerializer, UserDetailsSerializer, WordSerializer,
     AdminSerializer, AdminCreateSerializer, AdminUpdateSerializer,
-    PartOfSpeechSerializer, WordSerializer, BulkWordUploadSerializer,
+    PartOfSpeechSerializer, WordSerializer, WordLevelSerializer, StageSerializer
 )
+from django.http import HttpResponse
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from datetime import date
 from config import ACTIVITY_WORD_THRESHOLD
@@ -94,7 +95,7 @@ class UserMeView(generics.RetrieveAPIView):
 
 class WordsCreateView(generics.ListCreateAPIView):
     serializer_class = WordSerializer
-    queryset = Words.objects.all()
+    queryset = Words.objects.select_related('word_level', 'part_of_speech').all()
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -104,7 +105,7 @@ class WordsCreateView(generics.ListCreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class WordDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Words.objects.all()
+    queryset = Words.objects.select_related('word_level', 'part_of_speech').all()
     serializer_class = WordSerializer
 
     def put(self, request, *args, **kwargs):
@@ -121,7 +122,7 @@ class WordsListView(generics.ListAPIView):
 
     def get_queryset(self):
         level = self.request.query_params.get('level', None)
-        queryset = Words.objects.all()
+        queryset = Words.objects.select_related('word_level', 'part_of_speech').all()
         if level and level != 'all':
             queryset = queryset.filter(word_level__level=level)
         return queryset
@@ -172,11 +173,11 @@ class UserStageWordsView(generics.ListAPIView):
 
         if stage == 'introduction':
             used_word_ids = UserWordProgress.objects.filter(user=user).values_list('word_id', flat=True)
-            queryset = Words.objects.exclude(id_word__in=used_word_ids)
+            queryset = Words.objects.select_related('word_level', 'part_of_speech').exclude(id_word__in=used_word_ids)
         else:
-            queryset = Words.objects.filter(
-                userwordprogress_set__user=user,
-                userwordprogress_set__stage__name=stage
+            queryset = Words.objects.select_related('word_level', 'part_of_speech').filter(
+                user_progress__user=user,
+                user_progress__stage__name=stage
             )
 
         if level and level != 'all':
@@ -185,7 +186,7 @@ class UserStageWordsView(generics.ListAPIView):
         words = list(queryset.distinct())[:4]
         if len(words) < 4:
             exclude_ids = [w.id_word for w in words]
-            additional_queryset = Words.objects.exclude(id_word__in=exclude_ids)
+            additional_queryset = Words.objects.select_related('word_level', 'part_of_speech').exclude(id_word__in=exclude_ids)
             if level and level != 'all':
                 additional_queryset = additional_queryset.filter(word_level__level=level)
             additional_words = list(additional_queryset.distinct())[:4 - len(words)]
@@ -406,13 +407,25 @@ class BulkWordUploadView(APIView):
                     "error": "Неверный формат файла. Ожидаемые столбцы: " + ", ".join(expected_columns)
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            # Предварительно загружаем все существующие слова для проверки уникальности
+            existing_words_set = set(
+                Words.objects.values_list('word', 'translate_word').distinct()
+            )
+            # Преобразуем в множество кортежей для быстрого поиска
+            existing_words_set = {(word.lower(), translate.lower()) for word, translate in existing_words_set}
+
             errors = []
             words_to_create = []
             existing_words = []
             level_counts = {}
             skipped_count = 0
+            error_count = 0
             new_levels_created = []
             new_parts_of_speech_created = []
+
+            # Предварительно загружаем или создаем части речи и уровни
+            parts_of_speech = {pos.name: pos for pos in PartOfSpeech.objects.all()}
+            word_levels = {wl.level: wl for wl in WordLevel.objects.all()}
 
             for index, row in df.iterrows():
                 word_data = {
@@ -423,37 +436,54 @@ class BulkWordUploadView(APIView):
                     'rating': int(row['Rating']) if pd.notna(row['Rating']) else 1
                 }
 
+                # Проверка на пустые обязательные поля
                 if not word_data['word'] or not word_data['translate_word']:
-                    errors.append(f"Строка {index + 2}: Поля 'Word (English)' и '2' обязательны")
+                    errors.append(f"Строка {index + 2}: Поля 'Word (English)' и 'Translation (Russian)' обязательны")
+                    error_count += 1
                     continue
 
-                try:
-                    part_of_speech, created = PartOfSpeech.objects.get_or_create(name=word_data['part_of_speech'])
-                    if created:
-                        logger.info(f"Created new part of speech: {word_data['part_of_speech']}")
-                        new_parts_of_speech_created.append(word_data['part_of_speech'])
-                except Exception as e:
-                    errors.append(f"Строка {index + 2}: Ошибка при обработке части речи '{word_data['part_of_speech']}': {str(e)}")
-                    continue
+                # Проверка части речи
+                part_of_speech = parts_of_speech.get(word_data['part_of_speech'])
+                if not part_of_speech:
+                    try:
+                        part_of_speech, created = PartOfSpeech.objects.get_or_create(name=word_data['part_of_speech'])
+                        parts_of_speech[word_data['part_of_speech']] = part_of_speech
+                        if created:
+                            logger.info(f"Created new part of speech: {word_data['part_of_speech']}")
+                            new_parts_of_speech_created.append(word_data['part_of_speech'])
+                    except Exception as e:
+                        errors.append(f"Строка {index + 2}: Ошибка при обработке части речи '{word_data['part_of_speech']}': {str(e)}")
+                        error_count += 1
+                        continue
 
-                try:
-                    word_level, created = WordLevel.objects.get_or_create(level=word_data['word_level'])
-                    if created:
-                        logger.info(f"Created new CEFR level: {word_data['word_level']}")
-                        new_levels_created.append(word_data['word_level'])
-                except Exception as e:
-                    errors.append(f"Строка {index + 2}: Ошибка при обработке уровня CEFR '{word_data['word_level']}': {str(e)}")
-                    continue
+                # Проверка уровня CEFR
+                word_level = word_levels.get(word_data['word_level'])
+                if not word_level:
+                    try:
+                        word_level, created = WordLevel.objects.get_or_create(level=word_data['word_level'])
+                        word_levels[word_data['word_level']] = word_level
+                        if created:
+                            logger.info(f"Created new CEFR level: {word_data['word_level']}")
+                            new_levels_created.append(word_data['word_level'])
+                    except Exception as e:
+                        errors.append(f"Строка {index + 2}: Ошибка при обработке уровня CEFR '{word_data['word_level']}': {str(e)}")
+                        error_count += 1
+                        continue
 
+                # Инициализация счетчика уровня
                 if word_data['word_level'] not in level_counts:
                     level_counts[word_data['word_level']] = 0
 
+                # Проверка рейтинга
                 if word_data['rating'] < 1:
                     errors.append(f"Строка {index + 2}: Рейтинг должен быть не менее 1")
+                    error_count += 1
                     continue
 
-                if Words.objects.filter(word=word_data['word'], word_level=word_level).exists():
-                    existing_words.append(f"{word_data['word']} ({word_data['word_level']})")
+                # Проверка на уникальность в памяти
+                word_key = (word_data['word'].lower(), word_data['translate_word'].lower())
+                if word_key in existing_words_set:
+                    existing_words.append(f"{word_data['word']} ({word_data['translate_word']})")
                     skipped_count += 1
                     continue
 
@@ -465,31 +495,50 @@ class BulkWordUploadView(APIView):
                     'rating': word_data['rating']
                 })
                 level_counts[word_data['word_level']] += 1
+                # Добавляем слово в множество, чтобы избежать дубликатов в рамках текущей загрузки
+                existing_words_set.add(word_key)
 
             if errors:
-                return Response({"errors": errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "errors": errors,
+                    "message": "Загрузка завершена с ошибками",
+                    "added_count": 0,
+                    "skipped_count": skipped_count,
+                    "error_count": error_count,
+                    "existing_words": existing_words,
+                    "level_counts": level_counts,
+                    "new_levels_created": new_levels_created,
+                    "new_parts_of_speech_created": new_parts_of_speech_created
+                }, status=status.HTTP_400_BAD_REQUEST)
 
             with transaction.atomic():
                 created_words = []
                 for word_data in words_to_create:
-                    word, created = Words.objects.get_or_create(
-                        word=word_data['word'],
-                        word_level=word_data['word_level'],
-                        defaults={
-                            'part_of_speech': word_data['part_of_speech'],
-                            'translate_word': word_data['translate_word'],
-                            'rating': word_data['rating']
-                        }
-                    )
-                    if created:
-                        created_words.append(word)
+                    try:
+                        word, created = Words.objects.get_or_create(
+                            word=word_data['word'],
+                            translate_word=word_data['translate_word'],
+                            defaults={
+                                'part_of_speech': word_data['part_of_speech'],
+                                'word_level': word_data['word_level'],
+                                'rating': word_data['rating']
+                            }
+                        )
+                        if created:
+                            created_words.append(word)
+                    except Exception as e:
+                        errors.append(f"Ошибка при создании слова '{word_data['word']}': {str(e)}")
+                        error_count += 1
+                        continue
+
                 logger.info(f"Bulk upload: {len(created_words)} words created")
                 return Response({
                     'message': 'Слова успешно добавлены',
                     'added_count': len(created_words),
-                    'level_counts': level_counts,
                     'skipped_count': skipped_count,
+                    'error_count': error_count,
                     'existing_words': existing_words,
+                    'level_counts': level_counts,
                     'new_levels_created': new_levels_created,
                     'new_parts_of_speech_created': new_parts_of_speech_created
                 }, status=status.HTTP_201_CREATED)
@@ -503,3 +552,43 @@ class BulkWordUploadView(APIView):
         except Exception as e:
             logger.error(f"Unexpected error in bulk upload: {str(e)}")
             return Response({"error": f"Неожиданная ошибка при обработке файла: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class GetAvatarView(APIView):
+    def get(self, request, user_id):
+        try:
+            user = Users.objects.get(id_user=user_id)
+            if user.avatar:
+                return HttpResponse(user.avatar, content_type="image/jpeg")
+            return Response({"error": "Аватар не найден"}, status=status.HTTP_404_NOT_FOUND)
+        except Users.DoesNotExist:
+            return Response({"error": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
+        
+class StageListCreateView(generics.ListCreateAPIView):
+    queryset = Stage.objects.all()
+    serializer_class = StageSerializer
+    permission_classes = [IsAdminOrSelf]
+
+class StageDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Stage.objects.all()
+    serializer_class = StageSerializer
+    permission_classes = [IsAdminOrSelf]
+
+class WordLevelListCreateView(generics.ListCreateAPIView):
+    queryset = WordLevel.objects.all()
+    serializer_class = WordLevelSerializer
+    permission_classes = [IsAdminOrSelf]
+
+class WordLevelDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = WordLevel.objects.all()
+    serializer_class = WordLevelSerializer
+    permission_classes = [IsAdminOrSelf]
+
+class PartOfSpeechListCreateView(generics.ListCreateAPIView):
+    queryset = PartOfSpeech.objects.all()
+    serializer_class = PartOfSpeechSerializer
+    permission_classes = [IsAdminOrSelf]
+
+class PartOfSpeechDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = PartOfSpeech.objects.all()
+    serializer_class = PartOfSpeechSerializer
+    permission_classes = [IsAdminOrSelf]

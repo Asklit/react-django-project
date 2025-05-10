@@ -43,7 +43,7 @@ class Users(AbstractBaseUser, PermissionsMixin):
         on_delete=models.CASCADE,
         error_messages={'null': 'Уровень английского обязателен.'}
     )
-    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    avatar = models.BinaryField(null=True, blank=True)
     is_email_verificated = models.BooleanField(default=False)
     account_created_at = models.DateTimeField(auto_now_add=True)
     password_changed_at = models.DateTimeField(auto_now=True)

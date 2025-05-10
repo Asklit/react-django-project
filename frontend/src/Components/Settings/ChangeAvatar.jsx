@@ -1,9 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
+import Cropper from "react-easy-crop";
 import axios from "axios";
 import styles from "../../styles/settings.module.css";
 
 const ChangeAvatar = () => {
   const [preview, setPreview] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [isCropping, setIsCropping] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,24 +29,60 @@ const ChangeAvatar = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
+        setIsCropping(true);
         setError(null);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const getCroppedImg = async (imageSrc, pixelCrop) => {
+    const image = new Image();
+    image.src = imageSrc;
+    await image.decode();
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = pixelCrop.width;
+    canvas.height = pixelCrop.height;
+
+    ctx.drawImage(
+      image,
+      pixelCrop.x,
+      pixelCrop.y,
+      pixelCrop.width,
+      pixelCrop.height,
+      0,
+      0,
+      pixelCrop.width,
+      pixelCrop.height
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, "image/jpeg");
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!e.target.avatar.files[0]) {
-      setError("Пожалуйста, выберите изображение");
+    if (!croppedAreaPixels) {
+      setError("Пожалуйста, обрежьте изображение");
       return;
     }
     setIsLoading(true);
     setError(null);
     setSuccess(null);
 
+    const croppedBlob = await getCroppedImg(preview, croppedAreaPixels);
     const formData = new FormData();
-    formData.append("avatar", e.target.avatar.files[0]);
+    formData.append("avatar", croppedBlob, "avatar.jpg");
 
     try {
       const response = await axios.post(
@@ -56,11 +97,12 @@ const ChangeAvatar = () => {
       );
       setSuccess(response.data.status);
       setPreview(null);
+      setIsCropping(false);
       e.target.reset();
     } catch (error) {
       setError(
         error.response?.data?.errors?.avatar?.[0] ||
-        "Ошибка при загрузке аватара"
+          "Ошибка при загрузке аватара"
       );
     } finally {
       setIsLoading(false);
@@ -68,18 +110,24 @@ const ChangeAvatar = () => {
   };
 
   return (
-    <div>
+    <div className={styles.settingsContainer}>
       <h2 className={styles.sectionTitle}>Смена аватарки</h2>
       {success && <div className={styles.successMessage}>{success}</div>}
       <div className={styles.avatarContainer}>
-        {/* <div className={`${styles.avatarPreview} ${isLoading ? styles.loading : ""}`}>
-          {preview ? (
-            <img src={preview} alt="Avatar Preview" className={styles.avatarImage} />
-          ) : (
-            <div className={styles.avatarPlaceholder}>Выберите изображение</div>
-          )}
-          {isLoading && <div className={styles.loader}></div>}
-        </div> */}
+        {isCropping && preview && (
+          <div className={styles.cropContainer}>
+            <Cropper
+              image={preview}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              cropShape="round"
+              onCropChange={setCrop}
+              onZoomChange={setZoom}
+              onCropComplete={onCropComplete}
+            />
+          </div>
+        )}
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.formGroup}>
             <input

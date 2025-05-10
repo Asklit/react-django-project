@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from core.models import Users, Admins
-from vocabulary.models import Words, UserWordProgress, PartOfSpeech, WordLevel
+from vocabulary.models import Words, PartOfSpeech, WordLevel, Stage
 from django.contrib.auth.hashers import check_password
 import logging
 
@@ -373,3 +373,52 @@ class BulkWordUploadSerializer(serializers.Serializer):
             if created:
                 created_words.append(word)
         return created_words
+    
+class StageSerializer(serializers.ModelSerializer):
+    next_stage = serializers.PrimaryKeyRelatedField(queryset=Stage.objects.all(), allow_null=True)
+
+    class Meta:
+        model = Stage
+        fields = ['id', 'name', 'next_stage', 'interactions_needed']
+
+    def validate_name(self, value):
+        if not value:
+            raise serializers.ValidationError("Название этапа обязательно.")
+        if len(value) > 20:
+            raise serializers.ValidationError("Название этапа не должно превышать 20 символов.")
+        if self.instance is None and Stage.objects.filter(name=value).exists():
+            raise serializers.ValidationError("Этап с таким названием уже существует.")
+        return value
+
+    def validate_interactions_needed(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Количество взаимодействий не может быть отрицательным.")
+        return value
+    
+class WordLevelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WordLevel
+        fields = ['id', 'level']
+
+    def validate_level(self, value):
+        if not value:
+            raise serializers.ValidationError("Уровень обязателен.")
+        if len(value) > 2:
+            raise serializers.ValidationError("Уровень не должен превышать 2 символа.")
+        if self.instance is None and WordLevel.objects.filter(level=value).exists():
+            raise serializers.ValidationError("Уровень с таким значением уже существует.")
+        return value
+    
+class PartOfSpeechSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PartOfSpeech
+        fields = ['id', 'name']
+
+    def validate_name(self, value):
+        if not value:
+            raise serializers.ValidationError("Название части речи обязательно.")
+        if len(value) > 50:
+            raise serializers.ValidationError("Название не должно превышать 50 символов.")
+        if self.instance is None and PartOfSpeech.objects.filter(name=value).exists():
+            raise serializers.ValidationError("Часть речи с таким названием уже существует.")
+        return value

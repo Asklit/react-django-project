@@ -6,9 +6,15 @@ from .views import (
     UserStageWordsView, UpdateWordProgressView, StageCountsView,
     UserActivityView, UserMeView, UserActivityUpdateView,
     UserLevelProgressView, DailyUserActivityView,
-    WordLevelListView, PartOfSpeechListView, BulkWordUploadView
+    WordLevelListView, PartOfSpeechListView, BulkWordUploadView,
+    GetAvatarView, StageListCreateView, StageDetailView,
+    WordLevelListCreateView, WordLevelDetailView,
+    PartOfSpeechListCreateView, PartOfSpeechDetailView,
 )
-from authapp.views import RegisterView, LoginView, ChangePasswordView, ChangeUsernameView, ChangeAvatarView, AdminMeView
+from authapp.views import (
+    RegisterView, LoginView, ChangePasswordView, 
+    ChangeUsernameView, ChangeAvatarView, AdminMeView
+)
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.conf import settings
 from django.conf.urls.static import static
@@ -20,7 +26,8 @@ urlpatterns = [
     path('auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('auth/change-username/', ChangeUsernameView.as_view(), name='change-username'),
     path('auth/change-avatar/', ChangeAvatarView.as_view(), name='change-avatar'),
-    
+    path('auth/get-avatar/<int:user_id>/', GetAvatarView.as_view(), name='get-avatar'),  # Обновляем маршрут
+
     path('users/', UsersCreateView.as_view(), name='users-create'),
     path('users/list/', UsersListView.as_view(), name='users-list'),
     path('users/me/', UserMeView.as_view(), name='user-me'),
@@ -44,7 +51,14 @@ urlpatterns = [
     path('users/activity/update/', UserActivityUpdateView.as_view(), name='user-activity-update'),
     path('activity/users-daily/', DailyUserActivityView.as_view(), name='users-daily-activity'),
 
-    path('levels/', WordLevelListView.as_view(), name='word-levels'),  # New endpoint
+    path('levels/', WordLevelListView.as_view(), name='word-levels'),
     
     path('admins/me/', AdminMeView.as_view(), name='admin-me'),
+
+    path('stages/', StageListCreateView.as_view(), name='stage-list-create'),
+    path('stages/<int:pk>/', StageDetailView.as_view(), name='stage-detail'),
+    path('wordlevels/', WordLevelListCreateView.as_view(), name='wordlevel-list-create'),
+    path('wordlevels/<int:pk>/', WordLevelDetailView.as_view(), name='wordlevel-detail'),
+    path('partsofspeech/', PartOfSpeechListCreateView.as_view(), name='partsofspeech-list-create'),
+    path('partsofspeech/<int:pk>/', PartOfSpeechDetailView.as_view(), name='partsofspeech-detail'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

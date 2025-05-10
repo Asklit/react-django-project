@@ -219,14 +219,13 @@ function Words() {
     formData.append("file", file);
 
     try {
-      // Чтение файла на клиенте для определения общего количества строк
       const reader = new FileReader();
       reader.onload = async (e) => {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: "array" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        setTotalRows(rows.length - 1); // Учитываем заголовок
+        setTotalRows(rows.length - 1);
       };
       reader.readAsArrayBuffer(file);
 
@@ -238,17 +237,16 @@ function Words() {
           onUploadProgress: (progressEvent) => {
             const percentCompleted = Math.round(
               (progressEvent.loaded * 50) / progressEvent.total
-            ); // 50% для загрузки файла
+            );
             setUploadProgress(percentCompleted);
           },
         }
       );
 
-      // Симуляция прогресса обработки базы данных
       const simulateDbProgress = () => {
         let currentProgress = 50;
         const interval = setInterval(() => {
-          currentProgress += 5; // Увеличиваем на 5% каждые 100 мс
+          currentProgress += 5;
           if (currentProgress >= 100) {
             clearInterval(interval);
             setUploadProgress(100);
@@ -261,7 +259,7 @@ function Words() {
       simulateDbProgress();
 
       setUploadStats(response.data);
-      setSuccessMessage("Файл успешно обработан!");
+      setSuccessMessage(response.data.message);
       setTimeout(() => setSuccessMessage(""), 3000);
       Object.keys(response.data.level_counts).forEach((level) => {
         if (response.data.level_counts[level] > 0 && expandedLevels[level]) {
@@ -280,7 +278,7 @@ function Words() {
         setUploadProgress(0);
         setTotalRows(0);
         event.target.value = null;
-      }, 1000); // Задержка для завершения анимации прогресс-бара
+      }, 1000);
     }
   };
 
@@ -309,6 +307,25 @@ function Words() {
       return 0;
     });
     return sorted;
+  };
+
+  const getHoverClasses = (rowIndex, colIndex, hoveredCell) => {
+    const ROW_LIMIT = 100; // Ограничиваем анимацию до ±100 строк
+    if (!hoveredCell || hoveredCell.row === null || hoveredCell.col === null) {
+      return "";
+    }
+
+    // Проверяем, находится ли строка в диапазоне ±100 от текущей
+    const isRowInRange = Math.abs(hoveredCell.row - rowIndex) <= ROW_LIMIT;
+    const isHoveredRow = isRowInRange && hoveredCell.row !== rowIndex;
+    const isHoveredCol = isRowInRange && hoveredCell.col === colIndex;
+    const isHoveredCell = hoveredCell.row === rowIndex && hoveredCell.col === colIndex;
+
+    return `
+      ${isHoveredRow ? styles.hoveredRow : ""}
+      ${isHoveredCol ? styles.hoveredCol : ""}
+      ${isHoveredCell ? styles.hoveredCell : ""}
+    `;
   };
 
   const renderTable = (level, words) => {
@@ -425,14 +442,6 @@ function Words() {
         </tbody>
       </table>
     );
-  };
-
-  const getHoverClasses = (rowIndex, colIndex, hoveredCell) => {
-    return `
-      ${hoveredCell.row === rowIndex ? styles.hoveredRow : ""}
-      ${hoveredCell.col === colIndex ? styles.hoveredCol : ""}
-      ${hoveredCell.row === rowIndex && hoveredCell.col === colIndex ? styles.hoveredCell : ""}
-    `;
   };
 
   return (
@@ -579,20 +588,20 @@ function Words() {
       {uploadStats && (
         <div className={styles.statItem}>
           <h3>Результаты загрузки</h3>
-          <p>
-            <strong>Пропущено слов:</strong> {uploadStats.skipped_count}
-          </p>
-          {uploadStats.errors && uploadStats.errors.length > 0 && (
-            <>
-              <p>
-                <strong>Ошибки:</strong>
-              </p>
-              <ul>
-                {uploadStats.errors.map((error, index) => (
-                  <li key={index}>{error}</li>
-                ))}
-              </ul>
-            </>
+          <p><strong>Загружено слов:</strong> {uploadStats.added_count}</p>
+          <p><strong>Пропущено (уже существует):</strong> {uploadStats.skipped_count}</p>
+          <p><strong>Ошибочные строки:</strong> {uploadStats.error_count}</p>
+          {uploadStats.new_levels_created && uploadStats.new_levels_created.length > 0 && (
+            <p>
+              <strong>Новые уровни:</strong>{" "}
+              {uploadStats.new_levels_created.join(", ")}
+            </p>
+          )}
+          {uploadStats.new_parts_of_speech_created && uploadStats.new_parts_of_speech_created.length > 0 && (
+            <p>
+              <strong>Новые части речи:</strong>{" "}
+              {uploadStats.new_parts_of_speech_created.join(", ")}
+            </p>
           )}
         </div>
       )}

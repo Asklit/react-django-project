@@ -24,26 +24,18 @@ function Dashboards() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        console.log(`[${new Date().toISOString()}] Initiating stats fetch`);
         
-        // console.log(`[${new Date().toISOString()}] Sending request to users endpoint: GET http://localhost:8000/api/users/list/`);
-        // const usersRes = await api.get("http://localhost:8000/api/users/list/");
-        // console.log(`[${new Date().toISOString()}] Users request completed. Status: ${usersRes.status}, Response length: ${usersRes.data.length}`);
+        const usersRes = await api.get("http://localhost:8000/api/users/list/");
 
-        console.log(`[${new Date().toISOString()}] Sending request to words endpoint: GET http://localhost:8000/api/words/list/`);
         const wordsRes = await api.get("http://localhost:8000/api/words/list/");
-        console.log(`[${new Date().toISOString()}] Words request completed. Status: ${wordsRes.status}, Response length: ${wordsRes.data.length}`);
 
-        // console.log(`[${new Date().toISOString()}] Sending request to admins endpoint: GET http://localhost:8000/api/admins/`);
-        // const adminsRes = await api.get("http://localhost:8000/api/admins/");
-        // console.log(`[${new Date().toISOString()}] Admins request completed. Status: ${adminsRes.status}, Response length: ${adminsRes.data.length}`);
+        const adminsRes = await api.get("http://localhost:8000/api/admins/");
 
         const statsData = {
-          // users: usersRes.data.length,
+          users: usersRes.data.length,
           words: wordsRes.data.length,
-          // admins: adminsRes.data.length,
+          admins: adminsRes.data.length,
         };
-        console.log(`[${new Date().toISOString()}] Stats compiled:`, statsData);
         
         setStats(statsData);
       } catch (error) {
