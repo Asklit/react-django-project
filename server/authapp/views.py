@@ -11,6 +11,7 @@ from api.serializers import (
 from core.models import Users, Admins
 from rest_framework import generics
 from django.http import HttpResponse
+from django.utils import timezone
 
 class RegisterView(views.APIView):
     def post(self, request):
@@ -48,6 +49,7 @@ class ChangePasswordView(views.APIView):
         if serializer.is_valid():
             user = request.user
             user.set_password(serializer.validated_data['new_password'])
+            user.password_changed_at = timezone.now()
             user.save()
             return Response({"status": "Пароль успешно изменен"}, status=status.HTTP_200_OK)
         return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

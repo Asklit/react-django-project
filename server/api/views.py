@@ -14,12 +14,13 @@ from config import ACTIVITY_WORD_THRESHOLD
 from django.db import models
 from django.db.models import F
 from django.utils import timezone
-from django.db.models import Count
 from core.permissions import IsAdminOrSelf
 import logging
 from django.db import transaction
 import pandas as pd
 from rest_framework.views import APIView
+import dateutil.parser
+from django.db.models import Count, Min
 
 
 logger = logging.getLogger(__name__)
@@ -355,23 +356,51 @@ class UserLevelProgressView(generics.GenericAPIView):
 
 class DailyUserActivityView(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
-        days = 30
+        # Get query parameters
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
+
+        # Determine end_date (default to today)
         end_date = timezone.now().date()
-        start_date = end_date - timezone.timedelta(days=days)
+        if end_date_str:
+            try:
+                end_date = dateutil.parser.parse(end_date_str).date()
+            except (ValueError, TypeError):
+                return Response({"error": "Invalid end_date format"}, status=400)
+
+        # Determine start_date (default to earliest activity)
+        earliest_activity = UserActivity.objects.aggregate(Min('date'))['date__min']
+        earliest_user = Users.objects.aggregate(Min('last_day_online'))['last_day_online__min']
+        earliest_date = min(
+            earliest_activity or end_date,
+            earliest_user.date() if earliest_user else end_date
+        )
+        start_date = earliest_date
+        if start_date_str:
+            try:
+                start_date = dateutil.parser.parse(start_date_str).date()
+            except (ValueError, TypeError):
+                return Response({"error": "Invalid start_date format"}, status=400)
+
+        # Validate date range
+        if start_date > end_date:
+            return Response({"error": "start_date cannot be after end_date"}, status=400)
+
         activities = (
-            Users.objects.filter(last_day_online__date__range=[start_date, end_date])
-            .values("last_day_online__date")
-            .annotate(user_count=Count("id_user"))
-            .order_by("last_day_online__date")
+            UserActivity.objects.filter(date__range=[start_date, end_date])
+            .values("date")
+            .annotate(user_count=Count("user_id"))
+            .order_by("date")
         )
 
         result = []
         current_date = start_date
-        activity_dict = {str(a["last_day_online__date"]): a["user_count"] for a in activities}
+        activity_dict = {str(a["date"]): a["user_count"] for a in activities}
         while current_date <= end_date:
             date_str = str(current_date)
             result.append({"date": date_str, "user_count": activity_dict.get(date_str, 0)})
             current_date += timezone.timedelta(days=1)
+
         return Response(result)
     
 class WordLevelListView(generics.ListAPIView):

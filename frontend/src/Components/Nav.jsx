@@ -35,13 +35,18 @@ const Nav = () => {
       }
 
       // Запрашиваем аватар
-      const avatarResponse = await api.get(`/auth/get-avatar/${userId}/`, {
-        responseType: 'blob', // Указываем, что ожидаем бинарные данные
-      });
-      const imageUrl = URL.createObjectURL(avatarResponse.data);
-      setAvatar(imageUrl);
+      try {
+        const avatarResponse = await api.get(`/auth/get-avatar/${userId}/`, {
+          responseType: 'blob', // Указываем, что ожидаем бинарные данные
+        });
+        const imageUrl = URL.createObjectURL(avatarResponse.data);
+        setAvatar(imageUrl);
+      } catch (avatarErr) {
+        console.warn("No avatar found, using placeholder:", avatarErr);
+        setAvatar(null); // Use placeholder if avatar fetch fails
+      }
     } catch (err) {
-      console.error("Failed to fetch user data or avatar:", err);
+      console.error("Failed to fetch user data:", err);
       setUsername("Гость");
       setAvatar(null);
       setIsAuthenticated(false);
