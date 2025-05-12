@@ -13,7 +13,8 @@ from .views import (
 )
 from authapp.views import (
     RegisterView, LoginView, ChangePasswordView, 
-    ChangeUsernameView, ChangeAvatarView, AdminMeView
+    ChangeUsernameView, ChangeAvatarView, AdminMeView,
+    RequestVerificationView, VerifyEmailView
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 from django.conf import settings
@@ -26,7 +27,9 @@ urlpatterns = [
     path('auth/change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('auth/change-username/', ChangeUsernameView.as_view(), name='change-username'),
     path('auth/change-avatar/', ChangeAvatarView.as_view(), name='change-avatar'),
-    path('auth/get-avatar/<int:user_id>/', GetAvatarView.as_view(), name='get-avatar'),  # Обновляем маршрут
+    path('auth/get-avatar/<int:user_id>/', GetAvatarView.as_view(), name='get-avatar'),
+    path('auth/request-verification/', RequestVerificationView.as_view(), name='request-verification'),
+    path('auth/verify-email/<str:token>/', VerifyEmailView.as_view(), name='verify-email'),
 
     path('users/', UsersCreateView.as_view(), name='users-create'),
     path('users/list/', UsersListView.as_view(), name='users-list'),
