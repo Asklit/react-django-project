@@ -4,14 +4,13 @@ import styles from "../../styles/settings.module.css";
 import api from "../../api";
 
 const EmailVerification = () => {
-  const [email, setEmail] = useState("example@domain.com"); // Replace with actual user email from API
+  const [email, setEmail] = useState("example@domain.com");
   const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
-  // Fetch user email and verification status on mount
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -46,7 +45,7 @@ const EmailVerification = () => {
     try {
       const response = await api.post("auth/request-verification/");
       setSuccess(response.data.message);
-      setCooldown(60); // 60-second cooldown
+      setCooldown(60);
     } catch (err) {
       setError(err.response?.data?.error || "Ошибка при отправке письма.");
     } finally {

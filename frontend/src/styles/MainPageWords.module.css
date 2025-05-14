@@ -47,11 +47,11 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     min-width: 100px;
     text-align: center;
-    border: 2px solid var(--primary); /* Синий border для WPM, Words, Time */
+    border: 2px solid var(--primary); 
 }
 
 .stats span:first-child {
-    font-weight: bold; /* Выделяем Words */
+    font-weight: bold; 
 }
 
 .levelSelect {

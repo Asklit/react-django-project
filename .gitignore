@@ -7,3 +7,4 @@ tests/
 todo.txt
 server/.coverage
 server/pytest.ini
+parser/

@@ -73,7 +73,7 @@ function WordLevels() {
       } catch (error) {
         const errors = error.response?.data || { [field]: "Ошибка при обновлении." };
         setFieldErrors((prev) => ({ ...prev, [id]: errors }));
-        await fetchLevels(); // Revert to server state on error
+        await fetchLevels(); 
       }
     }, 500),
     []

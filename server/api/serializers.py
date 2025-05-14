@@ -56,7 +56,7 @@ class UserSerializer(serializers.ModelSerializer):
         return value
 
     def validate_password(self, value):
-        if value:  # Only validate if password is provided
+        if value: 
             if len(value) < 8:
                 raise serializers.ValidationError("Пароль должен содержать не менее 8 символов.")
             if not any(char.isdigit() for char in value):
@@ -280,7 +280,7 @@ class ChangeAvatarSerializer(serializers.ModelSerializer):
         fields = ['avatar']
 
     def validate_avatar(self, value):
-        if value.size > 5 * 1024 * 1024:  # 5 MB
+        if value.size > 5 * 1024 * 1024: 
             raise serializers.ValidationError("Файл слишком большой. Максимальный размер: 5 МБ.")
         if not value.content_type.startswith('image/'):
             raise serializers.ValidationError("Файл должен быть изображением (JPEG, PNG и т.д.).")

@@ -149,7 +149,7 @@ function Users() {
           ...prev,
           [userId]: errors,
         }));
-        await fetchUsersData(); // Revert to server state on error
+        await fetchUsersData(); 
       }
     }, 500),
     []

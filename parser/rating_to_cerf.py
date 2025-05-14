@@ -20,15 +20,15 @@ def assign_cefr_level(row):
     if pd.isna(row["CEFR Level"]) or row["CEFR Level"] == "":
         word = row["Word (English)"]
         rating = row["Rating"]
-        if pd.isna(rating):  # Если рейтинг отсутствует, присваиваем A1 по умолчанию
+        if pd.isna(rating):
             return "A1"
-        if len(word) <= 4 and rating <= 3:  # Короткие и частые слова
+        if len(word) <= 4 and rating <= 3:
             return "A1"
-        elif len(word) <= 6 and rating <= 5:  # Средней сложности
+        elif len(word) <= 6 and rating <= 5: 
             return "A2"
-        elif rating <= 7:  # Более сложные
+        elif rating <= 7:
             return "B1"
-        elif rating <= 9:  # Редкие слова
+        elif rating <= 9:
             return "B2"
         else:
             return "C1"

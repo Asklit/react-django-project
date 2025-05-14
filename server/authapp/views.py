@@ -138,7 +138,6 @@ class RequestVerificationView(APIView):
         serializer = EmailVerificationRequestSerializer(data={}, context={'request': request})
         if serializer.is_valid():
             user = request.user
-            # Check for recent tokens to prevent spamming
             recent_tokens = EmailVerificationToken.objects.filter(
                 user=user,
                 created_at__gte=timezone.now() - timedelta(minutes=1)
@@ -157,7 +156,7 @@ class RequestVerificationView(APIView):
                 expires_at=expires_at
             )
 
-            # Send email
+
             verification_url = f"{settings.FRONTEND_URL}/verify-email/{token}"
             subject = "Подтверждение электронной почты"
             message = (

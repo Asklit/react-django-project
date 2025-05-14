@@ -356,11 +356,9 @@ class UserLevelProgressView(generics.GenericAPIView):
 
 class DailyUserActivityView(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
-        # Get query parameters
         start_date_str = request.query_params.get('start_date')
         end_date_str = request.query_params.get('end_date')
 
-        # Determine end_date (default to today)
         end_date = timezone.now().date()
         if end_date_str:
             try:
@@ -368,7 +366,6 @@ class DailyUserActivityView(generics.GenericAPIView):
             except (ValueError, TypeError):
                 return Response({"error": "Invalid end_date format"}, status=400)
 
-        # Determine start_date (default to earliest activity)
         earliest_activity = UserActivity.objects.aggregate(Min('date'))['date__min']
         earliest_user = Users.objects.aggregate(Min('last_day_online'))['last_day_online__min']
         earliest_date = min(
@@ -382,7 +379,6 @@ class DailyUserActivityView(generics.GenericAPIView):
             except (ValueError, TypeError):
                 return Response({"error": "Invalid start_date format"}, status=400)
 
-        # Validate date range
         if start_date > end_date:
             return Response({"error": "start_date cannot be after end_date"}, status=400)
 
@@ -436,11 +432,9 @@ class BulkWordUploadView(APIView):
                     "error": "Неверный формат файла. Ожидаемые столбцы: " + ", ".join(expected_columns)
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Предварительно загружаем все существующие слова для проверки уникальности
             existing_words_set = set(
                 Words.objects.values_list('word', 'translate_word').distinct()
             )
-            # Преобразуем в множество кортежей для быстрого поиска
             existing_words_set = {(word.lower(), translate.lower()) for word, translate in existing_words_set}
 
             errors = []
@@ -452,7 +446,6 @@ class BulkWordUploadView(APIView):
             new_levels_created = []
             new_parts_of_speech_created = []
 
-            # Предварительно загружаем или создаем части речи и уровни
             parts_of_speech = {pos.name: pos for pos in PartOfSpeech.objects.all()}
             word_levels = {wl.level: wl for wl in WordLevel.objects.all()}
 
@@ -465,13 +458,11 @@ class BulkWordUploadView(APIView):
                     'rating': int(row['Rating']) if pd.notna(row['Rating']) else 1
                 }
 
-                # Проверка на пустые обязательные поля
                 if not word_data['word'] or not word_data['translate_word']:
                     errors.append(f"Строка {index + 2}: Поля 'Word (English)' и 'Translation (Russian)' обязательны")
                     error_count += 1
                     continue
 
-                # Проверка части речи
                 part_of_speech = parts_of_speech.get(word_data['part_of_speech'])
                 if not part_of_speech:
                     try:
@@ -485,7 +476,6 @@ class BulkWordUploadView(APIView):
                         error_count += 1
                         continue
 
-                # Проверка уровня CEFR
                 word_level = word_levels.get(word_data['word_level'])
                 if not word_level:
                     try:
@@ -499,17 +489,14 @@ class BulkWordUploadView(APIView):
                         error_count += 1
                         continue
 
-                # Инициализация счетчика уровня
                 if word_data['word_level'] not in level_counts:
                     level_counts[word_data['word_level']] = 0
 
-                # Проверка рейтинга
                 if word_data['rating'] < 1:
                     errors.append(f"Строка {index + 2}: Рейтинг должен быть не менее 1")
                     error_count += 1
                     continue
 
-                # Проверка на уникальность в памяти
                 word_key = (word_data['word'].lower(), word_data['translate_word'].lower())
                 if word_key in existing_words_set:
                     existing_words.append(f"{word_data['word']} ({word_data['translate_word']})")
@@ -524,7 +511,6 @@ class BulkWordUploadView(APIView):
                     'rating': word_data['rating']
                 })
                 level_counts[word_data['word_level']] += 1
-                # Добавляем слово в множество, чтобы избежать дубликатов в рамках текущей загрузки
                 existing_words_set.add(word_key)
 
             if errors:

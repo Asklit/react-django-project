@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styles from "../../styles/AdminPanel.module.css";
 import api from "../../api"; 
-import DateDisplay from "./DateFormat";
 
 function Admins() {
   const [admins, setAdmins] = useState([]);
@@ -9,7 +8,7 @@ function Admins() {
   const [formErrors, setFormErrors] = useState({});
   const [hoveredCell, setHoveredCell] = useState({ row: null, col: null });
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "ascending" });
-  const [successMessage, setSuccessMessage] = useState(""); // New state for success message
+  const [successMessage, setSuccessMessage] = useState("");
 
   const [newAdmin, setNewAdmin] = useState({
     id_admin: "",
@@ -72,7 +71,7 @@ function Admins() {
       console.log(`Deleting admin at URL: ${url}`);
       await api.delete(url);
       setSuccessMessage("Администратор успешно удален!");
-      setTimeout(() => setSuccessMessage(""), 3000); // Clear message after 3 seconds
+      setTimeout(() => setSuccessMessage(""), 3000);
       fetchAdminsData();
     } catch (error) {
       console.error("There has been a problem with the delete admin operation:", error.response ? error.response.data : error.message);

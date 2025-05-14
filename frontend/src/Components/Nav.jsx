@@ -7,9 +7,9 @@ import styles from "../styles/nav.module.css";
 const Nav = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem("accessToken"));
-  const [username, setUsername] = useState(null); // null indicates loading
-  const [avatar, setAvatar] = useState(null); // URL аватара
-  const [isAdmin, setIsAdmin] = useState(false); // Статус администратора
+  const [username, setUsername] = useState(null);
+  const [avatar, setAvatar] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false); 
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const fetchUserData = useCallback(async () => {
@@ -25,7 +25,6 @@ const Nav = () => {
     }
 
     try {
-      // Запрашиваем данные пользователя
       const userResponse = await api.get(`/users/${userId}/`);
       if (userResponse.data && userResponse.data.username) {
         setUsername(userResponse.data.username);
@@ -34,16 +33,15 @@ const Nav = () => {
         throw new Error("Invalid user data");
       }
 
-      // Запрашиваем аватар
       try {
         const avatarResponse = await api.get(`/auth/get-avatar/${userId}/`, {
-          responseType: 'blob', // Указываем, что ожидаем бинарные данные
+          responseType: 'blob',
         });
         const imageUrl = URL.createObjectURL(avatarResponse.data);
         setAvatar(imageUrl);
       } catch (avatarErr) {
         console.warn("No avatar found, using placeholder:", avatarErr);
-        setAvatar(null); // Use placeholder if avatar fetch fails
+        setAvatar(null); 
       }
     } catch (err) {
       console.error("Failed to fetch user data:", err);
@@ -61,7 +59,6 @@ const Nav = () => {
     }
   }, [navigate]);
 
-  // Проверка статуса администратора
   const fetchAdminStatus = useCallback(async () => {
     const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {

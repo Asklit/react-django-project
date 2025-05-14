@@ -64,7 +64,6 @@ const Words = ({
   const inputWordRef = useRef(null);
   const inputTranslateRef = useRef(null);
 
-  // Reset countedWords when the card is re-rendered with new word or translate
   useEffect(() => {
     setCountedWords(new Set());
     setInputWord("");
@@ -263,7 +262,6 @@ const Words = ({
         onComplete(index, isCorrect);
         clearInputs();
 
-        // Фокус на первую карточку после завершения
         if (index < totalWords - 1) {
           const nextInput = document.querySelectorAll(`.${styles.inputWord}`)[(index + 1) * 2];
           if (nextInput) {

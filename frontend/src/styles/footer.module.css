@@ -1,6 +1,6 @@
 .footer {
   color: var(--text);
-  padding: var(--spacing-sm) 0; /* Уменьшено с --spacing-md (20px) до --spacing-sm (15px) */
+  padding: var(--spacing-sm) 0;
   text-align: center;
   flex-shrink: 0;
   width: 100%;
