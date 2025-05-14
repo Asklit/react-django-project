@@ -271,6 +271,7 @@ class ChangeUsernameSerializer(serializers.Serializer):
             raise serializers.ValidationError("Это имя пользователя уже занято.")
         return value
 
+
 class ChangeAvatarSerializer(serializers.ModelSerializer):
     avatar = serializers.ImageField()
 

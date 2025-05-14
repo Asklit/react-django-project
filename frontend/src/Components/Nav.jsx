@@ -151,7 +151,7 @@ const Nav = () => {
             }
           }}
         >
-          Title<span>TODO</span>
+          .flash<span>Type</span>
         </div>
         <nav>
           <ul className={styles.menu}>
