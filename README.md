@@ -1,6 +1,8 @@
 # About project
 
-Information System Development for Learning Languages ​​and Practicing Typing Skills. This project was done as part of the course work of a second-year HSE student.
+Information System Development for Learning Languages ​​and Practicing Typing Skills.
+
+This project was done as part of the course work of a second-year HSE student.
 
 # Built With
 
