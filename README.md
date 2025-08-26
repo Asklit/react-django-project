@@ -4,12 +4,20 @@ Information System Development for Learning Languages ​​and Practicing Typin
 
 This project was done as part of the course work of a second-year HSE student.
 
-# Built With
+## Built With
 
-* React
-* Django
-* Chart.js
-* PostgreSQL
+- [React](https://reactjs.org/) - Frontend framework
+- [Django](https://www.djangoproject.com/) - Backend framework
+- [Chart.js](https://www.chartjs.org/) - Charting library
+- [PostgreSQL](https://www.postgresql.org/) - Database
+- [Docker](https://www.docker.com/) - Containerization for database
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org/) and npm for the frontend
+- [Python 3](https://www.python.org/) and pip for the backend
+- [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/) for the database
+- Ensure port `5432` is free (stop any local PostgreSQL service)
 
 # Installation
 
