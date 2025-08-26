@@ -51,7 +51,7 @@ This project was done as part of the course work of a second-year HSE student.
    ```
 7. Restore the database from the dump
 
-   Copy the provided flash_backup_clean.sql to the container:
+   Copy the provided flash_backup.sql to the container:
    ```bash
    docker cp flash_backup.sql flash_db:/flash_backup.sql
    ```
