@@ -1,1 +1,0 @@
-ACTIVITY_WORD_THRESHOLD = 10  # Порог слов для записи активности
