@@ -24,7 +24,7 @@ words_by_parser/
 .DS_Store
 
 __pycache__/
-.pycache_cache/
+.pytest_cache/
 *.pyc
 *.pyo
 *.pyd
