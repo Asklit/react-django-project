@@ -10,7 +10,6 @@ from .serializers import (
 from django.http import HttpResponse
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from datetime import date
-from config import ACTIVITY_WORD_THRESHOLD
 from django.db import models
 from django.db.models import F
 from django.utils import timezone
@@ -237,7 +236,7 @@ class UpdateWordProgressView(generics.GenericAPIView):
                 defaults={'word_count': 0}
             )
             activity.word_count += 1
-            if activity.word_count >= ACTIVITY_WORD_THRESHOLD:
+            if activity.word_count >= 10:
                 activity.save()
 
         return Response({
