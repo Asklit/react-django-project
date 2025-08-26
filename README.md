@@ -43,6 +43,24 @@ This project was done as part of the course work of a second-year HSE student.
 5. Set up the PostgreSQL database with Docker
    
    Ensure you have a docker-compose.yml
+
+   ```
+   version: '3.8'
+   services:
+     db:
+       image: postgres:15
+       container_name: flash_db
+       environment:
+         POSTGRES_DB: flash
+         POSTGRES_USER: superuser
+         POSTGRES_PASSWORD: gfkjdsfghl@34kHCVklhsdfklg
+       ports:
+         - "5432:5432"
+       volumes:
+         - postgres_data:/var/lib/postgresql/data
+   volumes:
+     postgres_data:
+   ```
    
    Start the Docker container:
      
