@@ -22,55 +22,56 @@ This project was done as part of the course work of a second-year HSE student.
 # Installation
 
 1. Clone the repo
-   ```sh
+   ```bash
    git clone https://github.com/Asklit/react-django-project
+   cd react-django-project
    ```
-2. Install NPM packages
-   ```sh
+2. Install frontend dependencies
+   ```bash
    cd frontend
    npm install
    ```
-3. Run npm
-   ```sh
+3. Run the frontend
+   ```bash
    npm start
    ```
-4. Install requirements.txt
-   ```sh
-   cd server
-   pip install -r reqirements.txt
+4. Install backend dependencies
+   ```bash
+   cd ../server
+   pip install -r requirements.txt
    ```
-5. Setup database
-   ```sh
+5. Set up the PostgreSQL database with Docker
+   
+   Ensure you have a docker-compose.yml
+   
+   Start the Docker container:
+     
+   ```bash
+   docker-compose up -d
+   ```
+7. Restore the database from the dump
+
+   Copy the provided flash_backup_clean.sql to the container:
+   ```bash
+   docker cp flash_backup.sql flash_db:/flash_backup.sql
+   ```
+
+   Restore the database:
+   ```bash
+   docker exec -i flash_db psql -U superuser -d flash -f /flash_backup.sql
+   ```
+
+8. Run Django migrations
+   ```bash
+   cd server
    python manage.py makemigrations
    python manage.py migrate
    ```
-6. Run backend part
-   ```sh
+9. Run backend part
+   ```bash
    python manage.py runserver
    ```
-7. Change git remote url to avoid accidental pushes to base project
-   ```sh
-   git remote set-url origin github_username/repo_name
-   git remote -v # confirm the changes
-   ```
-8. Create superadmin (Optional)
-   ```sql
-   INSERT INTO Admins (id_admin_id, first_name, surname, established_post)
-   VALUES (1, 'your_name', 'your_surname', 'your_established_post');
-   ```
-   
-   or
-
-    ```py
-    user = Users.objects.get(id=1)
-    admin = Admins.objects.create(
-        id_admin=user,
-        first_name='your_name',
-        surname='your_surname',
-        established_post='your_established_post'
-    )
-   ```
-8. Add lexic into database (Optional)
-   ```
-   upload server/expanded_words.xlsx in admin panel
-   ```
+10. Visit website
+    ```
+    http://localhost:3000/
+    ```
