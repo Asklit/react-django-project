@@ -19,7 +19,7 @@ This project was done as part of the course work of a second-year HSE student.
 - [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/) for the database
 - Ensure port `5432` is free (stop any local PostgreSQL service)
 
-# Installation
+## Installation
 
 1. Clone the repo
    ```bash
