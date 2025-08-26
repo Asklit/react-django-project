@@ -95,8 +95,8 @@ WSGI_APPLICATION = 'server.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'db',
-        'USER': 'superadmin',
+        'NAME': 'flash',
+        'USER': 'superuser',
         'PASSWORD': 'gfkjdsfghl@34kHCVklhsdfklg',
         'HOST': 'localhost',
         'PORT': '5432',

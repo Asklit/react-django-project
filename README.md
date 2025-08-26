@@ -9,6 +9,7 @@ This project was done as part of the course work of a second-year HSE student.
 * React
 * Django
 * Chart.js
+* PostgreSQL
 
 # Installation
 
