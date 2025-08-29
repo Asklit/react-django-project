@@ -69,6 +69,8 @@ This project was done as part of the course work of a second-year HSE student.
    ```
 7. Restore the database from the dump
 
+   Download backup file by link: https://drive.google.com/file/d/1taSQm_3o-Oo1HolFDOZl4PJoaha9Fxn6/view?usp=sharing
+   
    Copy the provided flash_backup.sql to the container:
    ```bash
    docker cp flash_backup.sql flash_db:/flash_backup.sql
@@ -79,17 +81,17 @@ This project was done as part of the course work of a second-year HSE student.
    docker exec -i flash_db psql -U superuser -d flash -f /flash_backup.sql
    ```
 
-8. Run Django migrations
+9. Run Django migrations
    ```bash
    cd server
    python manage.py makemigrations
    python manage.py migrate
    ```
-9. Run backend part
+10. Run backend part
    ```bash
    python manage.py runserver
    ```
-10. Visit website
+11. Visit website
     ```
     http://localhost:3000/
     ```
